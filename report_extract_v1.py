@@ -925,3 +925,4 @@ if __name__ == "__main__":
         pat_id = os.path.splitext(os.path.basename(report_path))[0]
         save_to_csv(pat_id, data, csv_path="reports_extracted.csv")
         save_to_json(pat_id, data, json_path="reports_extracted.json")  # <-- add this line
+        print(f"Extracted data for {pat_id}: {data}")
