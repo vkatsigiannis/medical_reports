@@ -902,7 +902,7 @@ def save_to_json(pat_id: str, data: dict, json_path: str = "reports_extracted.js
 if __name__ == "__main__":
     report_paths = ["pat0001.txt", "pat0002.txt", "pat0003.txt"]
     report_paths = ["pat0002.txt"]
-    report_paths = ["pat0002.txt", "pat0003.txt"]
+    # report_paths = ["pat0002.txt", "pat0003.txt"]
     # report_paths = os.listdir("txt/")
     report_paths.sort()
     print(f"Processing {len(report_paths)} reports...")
