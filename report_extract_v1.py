@@ -16,6 +16,8 @@ from pydantic import Field, create_model
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from transformers.utils.logging import set_verbosity_error
 
+
+
 # ---- GPU + quiet optional compilers (still uses CUDA) ----
 os.environ["TORCHDYNAMO_DISABLE"] = "1"
 os.environ["TORCHINDUCTOR_DISABLE"] = "1"
@@ -842,67 +844,13 @@ def extract_and_merge(
 
     return merged
 
-def save_to_csv(pat_id: str, data: dict, csv_path: str = "reports_extracted.csv") -> None:
-    """
-    Save one JSON dict as a row in CSV.
-    First column: patID
-    Columns: patID + all FIELDS_SPEC keys
-    Handles Greek characters correctly for Excel.
-    """
-    fieldnames = ["patID"] + list(FIELDS_SPEC.keys())
-    row = {"patID": pat_id}
-
-    # keep Greek text as-is; empty string for nulls
-    for k in FIELDS_SPEC.keys():
-        v = data.get(k, None)
-        row[k] = "" if v is None else v
-
-    file_exists = os.path.exists(csv_path)
-
-    # Use UTF-8 BOM on first write so Excel auto-detects encoding
-    if not file_exists:
-        with open(csv_path, "w", encoding="utf-8-sig", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
-            writer.writeheader()
-            writer.writerow(row)
-    else:
-        with open(csv_path, "a", encoding="utf-8", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
-            writer.writerow(row)
-
-def save_to_json(pat_id: str, data: dict, json_path: str = "reports_extracted.json") -> None:
-    """
-    Write nested JSON:
-      {
-        "<pat_id>": { ...features... },
-        ...
-      }
-    If the file exists, merge/update the top-level dict.
-    """
-    payload = {}
-    if os.path.exists(json_path):
-        try:
-            with open(json_path, "r", encoding="utf-8") as f:
-                payload = json.load(f)
-            if not isinstance(payload, dict):
-                payload = {}
-        except Exception:
-            payload = {}
-
-    payload[pat_id] = data
-
-    with open(json_path, "w", encoding="utf-8") as f:
-        json.dump(payload, f, ensure_ascii=False, indent=2)
-
-
-
 
 
 # ======================== MAIN ========================
 if __name__ == "__main__":
     report_paths = ["pat0001.txt", "pat0002.txt", "pat0003.txt"]
     report_paths = ["pat0002.txt"]
-    # report_paths = ["pat0002.txt", "pat0003.txt"]
+    report_paths = ["pat0002.txt", "pat0003.txt"]
     # report_paths = os.listdir("txt/")
     report_paths.sort()
     print(f"Processing {len(report_paths)} reports...")
@@ -924,5 +872,6 @@ if __name__ == "__main__":
 
         pat_id = os.path.splitext(os.path.basename(report_path))[0]
         save_to_csv(pat_id, data, csv_path="reports_extracted.csv")
-        save_to_json(pat_id, data, json_path="reports_extracted.json")  # <-- add this line
+        save_to_json(pat_id, data, json_path="reports_extracted.json")
+        save_to_xml(pat_id, data, xml_path="reports_extracted.xml")
         print(f"Extracted data for {pat_id}: {data}")
