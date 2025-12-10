@@ -1,0 +1,11 @@
+﻿patID,birads,exam_date,bpe,adc,perfusion_curve,acr,maza,nme_presence,mass_margins,nme_margins,radial_spiculations,mass_enhancement_pattern,nme_enhancement_pattern,non_enhancing_septa,nme_linear,nme_segmental,nme_regional,nme_bilateral
+pat0001,3,,Marked,χωρίς περιορισμό,Τύπος I,D,συμπαγής αλλοίωση,υπάρχει,,,,ομοιογενής,ομοιογενής,,,,,
+pat0003,2,,Mild,χωρίς περιορισμό,Τύπος I,C,δεν υπάρχει,,,,,,,,,,,
+pat0004,2,,Moderate,χωρίς περιορισμό,,D,,,,,,,,,,,,
+pat0002,2,,Minimal,,,D,,δεν υπάρχει,,,,,,,,,,
+pat0005,3,,Moderate,χωρίς περιορισμό,Τύπος I,B-C,,,,,,,,,,,,
+pat0006,3,,Mild,χωρίς περιορισμό,Τύπος I,D,συμπαγής αλλοίωση,δεν υπάρχει,σαφή,,,,,,,,,
+pat0008,2,,Minimal,,,A-B,,δεν υπάρχει,,,,,,,,,,
+pat0007,1,,Minimal,,,A-B,δεν υπάρχει,δεν υπάρχει,,,,,,,,,,
+pat0009,2,,,χωρίς περιορισμό,,,,,,,,,,,,,,
+pat0010,6,,Minimal,χωρίς περιορισμό,,D,δεν υπάρχει,δεν υπάρχει,,,,,,,,,,

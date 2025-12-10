@@ -870,6 +870,31 @@ def save_to_csv(pat_id: str, data: dict, csv_path: str = "reports_extracted.csv"
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writerow(row)
 
+def save_to_json(pat_id: str, data: dict, json_path: str = "reports_extracted.json") -> None:
+    """
+    Write nested JSON:
+      {
+        "<pat_id>": { ...features... },
+        ...
+      }
+    If the file exists, merge/update the top-level dict.
+    """
+    payload = {}
+    if os.path.exists(json_path):
+        try:
+            with open(json_path, "r", encoding="utf-8") as f:
+                payload = json.load(f)
+            if not isinstance(payload, dict):
+                payload = {}
+        except Exception:
+            payload = {}
+
+    payload[pat_id] = data
+
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+
+
 
 
 
@@ -877,6 +902,7 @@ def save_to_csv(pat_id: str, data: dict, csv_path: str = "reports_extracted.csv"
 if __name__ == "__main__":
     report_paths = ["pat0001.txt", "pat0002.txt", "pat0003.txt"]
     report_paths = ["pat0002.txt"]
+    report_paths = ["pat0002.txt", "pat0003.txt"]
     # report_paths = os.listdir("txt/")
     report_paths.sort()
     print(f"Processing {len(report_paths)} reports...")
@@ -887,14 +913,15 @@ if __name__ == "__main__":
 
         groups = [
             ["birads"], ["acr"],
-            ["maza"], ["mass_margins"], ["radial_spiculations"],
-            ["mass_enhancement_pattern"], ["non_enhancing_septa"],
-            ["nme_presence"], ["nme_margins"], ["nme_enhancement_pattern"],
-            ["nme_linear"], ["nme_segmental"], ["nme_regional"], ["nme_bilateral"],
-            ["bpe"], ["adc"], ["perfusion_curve"],
+            # ["maza"], ["mass_margins"], ["radial_spiculations"],
+            # ["mass_enhancement_pattern"], ["non_enhancing_septa"],
+            # ["nme_presence"], ["nme_margins"], ["nme_enhancement_pattern"],
+            # ["nme_linear"], ["nme_segmental"], ["nme_regional"], ["nme_bilateral"],
+            # ["bpe"], ["adc"], ["perfusion_curve"],
         ]
 
         data = extract_and_merge(report_text, groups, use_regex_fallback=True)
 
         pat_id = os.path.splitext(os.path.basename(report_path))[0]
         save_to_csv(pat_id, data, csv_path="reports_extracted.csv")
+        save_to_json(pat_id, data, json_path="reports_extracted.json")  # <-- add this line
