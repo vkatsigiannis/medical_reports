@@ -112,17 +112,15 @@ _PROMPT_FIELD_RULES = {
         "If sections disagree, prefer ΣΥΜΠΕΡΑΣΜΑ. "
         "Default is True."
     ),
-    "cysts_left": (
-        "- Cysts (LEFT): Return true only if the report explicitly mentions cyst(s) located in the LEFT breast "
-        "(κύστη/κύστεις/κυστικές αλλοιώσεις αριστερά, στον αριστερό μαστό). "
-        "Count explicit bilateral cyst statements (e.g., «κυστικές αλλοιώσεις αμφοτερόπλευρα») as true. "
-        "Ignore cysts on the right when deciding left. If no explicit evidence, return false."
-    ),
-    "cysts_right": (
-        "- Cysts (RIGHT): Return true only if the report explicitly mentions cyst(s) located in the RIGHT breast "
-        "(κύστη/κύστεις/κυστικές αλλοιώσεις δεξιά, στον δεξιό μαστό). "
-        "Count explicit bilateral cyst statements as true. "
-        "Ignore cysts on the left when deciding right. If no explicit evidence, return false."
+
+    "enhancement_presence": (
+        '- Ύπαρξη Ενίσχυσης (περιοχές παθολογικής σκιαγραφικής ενίσχυσης): '
+        'Return «υπάρχει» if the report explicitly mentions pathological enhancement areas, '
+        'including phrases like «περιοχή/ες μη μαζομορφής σκιαγραφικής ενίσχυσης» or '
+        '«περιοχές παθολογικής σκιαγραφικής ενίσχυσης». '
+        'Return «δεν υπάρχει» only with explicit negation (π.χ. «Δεν παρατηρούνται …»). '
+        'IGNORE background/BPE statements such as «ενίσχυση παρεγχύματος / BPE» unless an explicit area/region of enhancement is stated. '
+        'Prefer ΣΥΜΠΕΡΑΣΜΑ if conflicting.'
     ),
 
 
@@ -273,8 +271,7 @@ def build_prompt(report: str, prompt_keys: list[str]) -> str:
     if "left_breast" in prompt_keys:  fields_stub.append('"left_breast": <true|false>')
     if "right_breast" in prompt_keys: fields_stub.append('"right_breast": <true|false>')
 
-    if "cysts_left" in prompt_keys:  fields_stub.append('"cysts_left": <true|false>')
-    if "cysts_right" in prompt_keys: fields_stub.append('"cysts_right": <true|false>')
+    if "enhancement_presence" in prompt_keys: fields_stub.append('"enhancement_presence": <υπάρχει|δεν υπάρχει or null>')
 
 
     if "birads" in prompt_keys: fields_stub.append('"birads": <0..6 or null>')
@@ -693,6 +690,30 @@ def _nme_type_regex(text: str, kind: str) -> Optional[str]:
         return "υπάρχει"
     return None
 
+# --- Ύπαρξη Ενίσχυσης (pathologic enhancement areas) ---
+_ENHP_EN_POS = re.compile(
+    r"\b(pathologic(?:al)?\s+(?:contrast\s+)?enhancement|areas?\s+of\s+pathologic(?:al)?\s+enhancement)\b",
+    flags=re.IGNORECASE
+)
+# Greek (de-accented): match «(περιοχές )?παθολογικής σκιαγραφικής ενίσχυσης»
+_ENHP_GR_POS = re.compile(r"(?:περιοχε\w+\s+)?παθολογικ\w+\s+σκιαγραφ\w+\s+ενισχυ\w+")
+# Explicit negations around the same concept
+_ENHP_GR_NEG = re.compile(
+    r"(?:\bδεν\s+παρατηρειτ\w+|\bχωρις|\bαπουσια)[^\n\r]{0,20}(?:περιοχε\w+\s+)?παθολογικ\w+\s+σκιαγραφ\w+\s+ενισχυ\w+"
+)
+_ENHP_EN_NEG = re.compile(r"\bno\s+(?:areas?\s+of\s+)?pathologic(?:al)?\s+(?:contrast\s+)?enhancement\b", re.IGNORECASE)
+
+def regex_enhancement_presence(text: str) -> Optional[str]:
+    raw = text
+    t = _deaccent_lower(raw)
+    # negatives first
+    if _ENHP_EN_NEG.search(raw) or _ENHP_GR_NEG.search(t):
+        return "δεν υπάρχει"
+    if _ENHP_EN_POS.search(raw) or _ENHP_GR_POS.search(t):
+        return "υπάρχει"
+    return None
+
+
 
 # ================== DYNAMIC SCHEMA ====================
 FIELDS_SPEC = {
@@ -700,8 +721,7 @@ FIELDS_SPEC = {
     "left_breast":  (bool, Field(False)),
     "right_breast": (bool, Field(False)),
 
-    "cysts_left":  (Optional[bool], None),
-    "cysts_right": (Optional[bool], None),
+    "enhancement_presence": (Optional[Literal["υπάρχει", "δεν υπάρχει"]], None),
 
     "birads": (Optional[int], Field(None, ge=0, le=6)),
     "exam_date": (Optional[str], None),
@@ -767,6 +787,13 @@ def extract_all(report_text: str, prompt_keys: list[str], use_regex_fallback: bo
                 obj["nme_presence"] = ev
             elif obj.get("nme_presence") not in ("υπάρχει", "δεν υπάρχει"):
                 obj["nme_presence"] = None
+        if "enhancement_presence" in prompt_keys:
+            ev = regex_enhancement_presence(report_text)
+            if ev is not None:
+                obj["enhancement_presence"] = ev
+            elif obj.get("enhancement_presence") not in ("υπάρχει", "δεν υπάρχει"):
+                obj["enhancement_presence"] = None
+
 
     # --- ADC: controlled by use_regex_fallback (like ACR) ---
     if "adc" in prompt_keys:
@@ -993,7 +1020,7 @@ def extract_and_merge(
 if __name__ == "__main__":
     report_paths = ["pat0001.txt", "pat0002.txt", "pat0003.txt"]
     report_paths = ["pat0002.txt"]
-    # report_paths = ["pat0001.txt", "pat0002.txt", "pat0003.txt", "pat0004.txt", "pat0005.txt", "pat0006.txt"]
+    report_paths = ["pat0001.txt", "pat0002.txt", "pat0003.txt", "pat0004.txt", "pat0005.txt", "pat0006.txt"]
     # report_paths = os.listdir("txt/")
     report_paths.sort()
     print(f"Processing {len(report_paths)} reports...")
@@ -1005,19 +1032,11 @@ if __name__ == "__main__":
 
 
         groups = [
-            ["birads"],
+            # ["birads"],
+            ["enhancement_presence"],
             # ["breast"],
             # ["left_breast"], ["right_breast"],
             # ["cysts_left", "cysts_right"],
-            ["maza"], ["mass_margins"], ["radial_spiculations"], ["adc"]
-            # ["mass_enhancement_pattern"], ["non_enhancing_septa"],
-            # ["nme_presence"], ["nme_margins"], ["nme_enhancement_pattern"],
-            # ["nme_linear"], ["nme_segmental"], ["nme_regional"], ["nme_bilateral"],
-            # ["bpe"], ["perfusion_curve"],
-        ]
-
-        general_info = [
-            ["birads"],
             # ["maza"], ["mass_margins"], ["radial_spiculations"], ["adc"]
             # ["mass_enhancement_pattern"], ["non_enhancing_septa"],
             # ["nme_presence"], ["nme_margins"], ["nme_enhancement_pattern"],
@@ -1026,13 +1045,13 @@ if __name__ == "__main__":
         ]
 
         # identify the breast of interest
-        breast_details = extract_and_merge(
-            report_text,
-            key_groups=[["breast"], ["left_breast"], ["right_breast"]],
-            use_regex_fallback=False,
-        )
-        breast_location = reduce_to_laterality_view(breast_details)
-        print(breast_location)
+        # breast_details = extract_and_merge(
+        #     report_text,
+        #     key_groups=[["breast"], ["left_breast"], ["right_breast"]],
+        #     use_regex_fallback=False,
+        # )
+        # breast_location = reduce_to_laterality_view(breast_details)
+        # print(breast_location)
 
         
 
@@ -1046,8 +1065,8 @@ if __name__ == "__main__":
         # save_to_xml(pat_id, data, xml_path="reports_extracted.xml")
         # print(f"Extracted data for {pat_id}: {data}")
 
-        # pat_id = os.path.splitext(os.path.basename(report_path))[0]
-        # save_to_csv(pat_id, data, csv_path="reports_extracted.csv")
-        # save_to_json(pat_id, data, json_path="reports_extracted.json")
-        # save_to_xml(pat_id, data, xml_path="reports_extracted.xml")
+        pat_id = os.path.splitext(os.path.basename(report_path))[0]
+        save_to_csv(pat_id, data, csv_path="reports_extracted.csv")
+        save_to_json(pat_id, data, json_path="reports_extracted.json")
+        save_to_xml(pat_id, data, xml_path="reports_extracted.xml")
         # print(f"Extracted data for {pat_id}: {data}")
