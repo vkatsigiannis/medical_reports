@@ -112,6 +112,21 @@ _PROMPT_FIELD_RULES = {
         "If sections disagree, prefer ΣΥΜΠΕΡΑΣΜΑ. "
         "Default is True."
     ),
+    "cysts_left": (
+        "- Cysts (LEFT): Return true only if the report explicitly mentions cyst(s) located in the LEFT breast "
+        "(κύστη/κύστεις/κυστικές αλλοιώσεις αριστερά, στον αριστερό μαστό). "
+        "Count explicit bilateral cyst statements (e.g., «κυστικές αλλοιώσεις αμφοτερόπλευρα») as true. "
+        "Ignore cysts on the right when deciding left. If no explicit evidence, return false."
+    ),
+    "cysts_right": (
+        "- Cysts (RIGHT): Return true only if the report explicitly mentions cyst(s) located in the RIGHT breast "
+        "(κύστη/κύστεις/κυστικές αλλοιώσεις δεξιά, στον δεξιό μαστό). "
+        "Count explicit bilateral cyst statements as true. "
+        "Ignore cysts on the left when deciding right. If no explicit evidence, return false."
+    ),
+
+
+
     "birads": "- BI-RADS category as an integer 0..6. Accept I/II/III/IV/V/VI and map to 1..6.",
     "exam_date": "- Exam date. Prefer YYYY-MM-DD. Normalize 31/03/2024 → 2024-03-31 when unambiguous.",
     "bpe": "- Background Parenchymal Enhancement (BPE). Allowed: Minimal, Mild, Moderate, Marked. "
@@ -257,6 +272,10 @@ def build_prompt(report: str, prompt_keys: list[str]) -> str:
 
     if "left_breast" in prompt_keys:  fields_stub.append('"left_breast": <true|false>')
     if "right_breast" in prompt_keys: fields_stub.append('"right_breast": <true|false>')
+
+    if "cysts_left" in prompt_keys:  fields_stub.append('"cysts_left": <true|false>')
+    if "cysts_right" in prompt_keys: fields_stub.append('"cysts_right": <true|false>')
+
 
     if "birads" in prompt_keys: fields_stub.append('"birads": <0..6 or null>')
     if "exam_date" in prompt_keys: fields_stub.append('"exam_date": <YYYY-MM-DD or raw or null>')
@@ -680,6 +699,10 @@ FIELDS_SPEC = {
     "breast": (Optional[Literal["Left", "Right", "Both"]]),
     "left_breast":  (bool, Field(False)),
     "right_breast": (bool, Field(False)),
+
+    "cysts_left":  (Optional[bool], None),
+    "cysts_right": (Optional[bool], None),
+
     "birads": (Optional[int], Field(None, ge=0, le=6)),
     "exam_date": (Optional[str], None),
     "bpe": (Optional[Literal["Minimal", "Mild", "Moderate", "Marked"]], None),
@@ -913,34 +936,16 @@ def extract_all(report_text: str, prompt_keys: list[str], use_regex_fallback: bo
     return {k: obj.get(k) for k in prompt_keys}
 
 def reduce_to_laterality_view(merged: dict) -> dict:
-    """Keep only two booleans: left / right."""
+    """Map laterality evidence into {"Left": bool, "Right": bool}."""
     lb = merged.get("left_breast")
     rb = merged.get("right_breast")
     br = merged.get("breast")
     return {
-        "left":  bool((lb is True) or (br in ("Left", "Both"))),
-        "right": bool((rb is True) or (br in ("Right", "Both"))),
+        "Left":  bool((lb is True) or (br in ("Left", "Both"))),
+        "Right": bool((rb is True) or (br in ("Right", "Both"))),
     }
 
-def project_with_laterality(data: dict) -> dict:
-    """
-    Keep all non-laterality keys and replace laterality with:
-      left  = (left_breast is True) or (breast in {"Left","Both"})
-      right = (right_breast is True) or (breast in {"Right","Both"})
-    Drop internal laterality fields.
-    """
-    # compute booleans from LLM-only fields
-    lb = data.get("left_breast") is True or data.get("breast") in ("Left", "Both")
-    rb = data.get("right_breast") is True or data.get("breast") in ("Right", "Both")
 
-    # copy everything except the internal laterality keys
-    drop = {"left_breast", "right_breast", "breast", "left_finding", "right_finding"}
-    out = {k: v for k, v in data.items() if k not in drop}
-
-    # add final booleans
-    out["left"] = bool(lb)
-    out["right"] = bool(rb)
-    return out
 
 
 
@@ -979,13 +984,6 @@ def extract_and_merge(
     all_keys = {k for group in key_groups for k in group}
     for k in all_keys:
         merged.setdefault(k, None)
-    
-    lb = merged.get("left_breast")
-    rb = merged.get("right_breast")
-    br = merged.get("breast")
-
-    merged["left_finding"] = bool((lb is True) or (br in ("Left", "Both")))
-    merged["right_finding"] = bool((rb is True) or (br in ("Right", "Both")))
 
     return merged
 
@@ -995,7 +993,7 @@ def extract_and_merge(
 if __name__ == "__main__":
     report_paths = ["pat0001.txt", "pat0002.txt", "pat0003.txt"]
     report_paths = ["pat0002.txt"]
-    report_paths = ["pat0001.txt", "pat0002.txt", "pat0003.txt", "pat0004.txt", "pat0005.txt", "pat0006.txt"]
+    # report_paths = ["pat0001.txt", "pat0002.txt", "pat0003.txt", "pat0004.txt", "pat0005.txt", "pat0006.txt"]
     # report_paths = os.listdir("txt/")
     report_paths.sort()
     print(f"Processing {len(report_paths)} reports...")
@@ -1003,11 +1001,23 @@ if __name__ == "__main__":
         print(f"Processing report: {report_path}")
         with open(os.path.join("txt/", report_path), "r", encoding="utf-8") as f:
             report_text = f.read()
+            
+
 
         groups = [
             ["birads"],
-            ["breast"],
-            ["left_breast"], ["right_breast"],
+            # ["breast"],
+            # ["left_breast"], ["right_breast"],
+            # ["cysts_left", "cysts_right"],
+            ["maza"], ["mass_margins"], ["radial_spiculations"], ["adc"]
+            # ["mass_enhancement_pattern"], ["non_enhancing_septa"],
+            # ["nme_presence"], ["nme_margins"], ["nme_enhancement_pattern"],
+            # ["nme_linear"], ["nme_segmental"], ["nme_regional"], ["nme_bilateral"],
+            # ["bpe"], ["perfusion_curve"],
+        ]
+
+        general_info = [
+            ["birads"],
             # ["maza"], ["mass_margins"], ["radial_spiculations"], ["adc"]
             # ["mass_enhancement_pattern"], ["non_enhancing_septa"],
             # ["nme_presence"], ["nme_margins"], ["nme_enhancement_pattern"],
@@ -1015,18 +1025,29 @@ if __name__ == "__main__":
             # ["bpe"], ["perfusion_curve"],
         ]
 
+        # identify the breast of interest
+        breast_details = extract_and_merge(
+            report_text,
+            key_groups=[["breast"], ["left_breast"], ["right_breast"]],
+            use_regex_fallback=False,
+        )
+        breast_location = reduce_to_laterality_view(breast_details)
+        print(breast_location)
+
+        
+
         data = extract_and_merge(report_text, groups, use_regex_fallback=False)
+        print(data)
+        # data = project_with_laterality(data)
 
-        data = project_with_laterality(data)
+        # pat_id = os.path.splitext(os.path.basename(report_path))[0]
+        # save_to_csv(pat_id, data, csv_path="reports_extracted.csv")
+        # save_to_json(pat_id, data, json_path="reports_extracted.json")
+        # save_to_xml(pat_id, data, xml_path="reports_extracted.xml")
+        # print(f"Extracted data for {pat_id}: {data}")
 
-        pat_id = os.path.splitext(os.path.basename(report_path))[0]
-        save_to_csv(pat_id, data, csv_path="reports_extracted.csv")
-        save_to_json(pat_id, data, json_path="reports_extracted.json")
-        save_to_xml(pat_id, data, xml_path="reports_extracted.xml")
-        print(f"Extracted data for {pat_id}: {data}")
-
-        pat_id = os.path.splitext(os.path.basename(report_path))[0]
-        save_to_csv(pat_id, data, csv_path="reports_extracted.csv")
-        save_to_json(pat_id, data, json_path="reports_extracted.json")
-        save_to_xml(pat_id, data, xml_path="reports_extracted.xml")
-        print(f"Extracted data for {pat_id}: {data}")
+        # pat_id = os.path.splitext(os.path.basename(report_path))[0]
+        # save_to_csv(pat_id, data, csv_path="reports_extracted.csv")
+        # save_to_json(pat_id, data, json_path="reports_extracted.json")
+        # save_to_xml(pat_id, data, xml_path="reports_extracted.xml")
+        # print(f"Extracted data for {pat_id}: {data}")
