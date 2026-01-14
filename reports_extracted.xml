@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='utf-8'?>
+<reports>
+  <patient id="pat0001">
+    <enhancement_presence>υπάρχει</enhancement_presence>
+  </patient>
+  <patient id="pat0002">
+    <enhancement_presence>δεν υπάρχει</enhancement_presence>
+  </patient>
+  <patient id="pat0003">
+    <enhancement_presence>δεν υπάρχει</enhancement_presence>
+  </patient>
+  <patient id="pat0004">
+    <enhancement_presence>υπάρχει</enhancement_presence>
+  </patient>
+  <patient id="pat0005">
+    <enhancement_presence>υπάρχει</enhancement_presence>
+  </patient>
+  <patient id="pat0006">
+    <enhancement_presence>υπάρχει</enhancement_presence>
+  </patient>
+  <patient id="pat0007">
+    <enhancement_presence>δεν υπάρχει</enhancement_presence>
+  </patient>
+  <patient id="pat0008">
+    <enhancement_presence>δεν υπάρχει</enhancement_presence>
+  </patient>
+  <patient id="pat0009">
+    <enhancement_presence>υπάρχει</enhancement_presence>
+  </patient>
+  <patient id="pat0010">
+    <enhancement_presence>δεν υπάρχει</enhancement_presence>
+  </patient>
+</reports>

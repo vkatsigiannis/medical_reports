@@ -45,7 +45,7 @@ MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct"
 # MODEL_ID = "mistralai/Mistral-7B-Instruct-v0.3"
 MODEL_ID = "Qwen/Qwen2.5-7B-Instruct"
 # MODEL_ID = "meta-llama/Meta-Llama-3-8B-Instruct" # requires access
-# MODEL_ID = "Qwen/Qwen2.5-14B-Instruct"
+MODEL_ID = "Qwen/Qwen2.5-14B-Instruct"
 # MODEL_ID = "Qwen/Qwen2.5-32B-Instruct"
 # MODEL_ID = "Qwen/Qwen2.5-72B-Instruct"
 # MODEL_ID = "microsoft/Phi-3.5-mini-instruct" # AttributeError: 'DynamicCache' object has no attribute 'seen_tokens'
@@ -114,19 +114,28 @@ _PROMPT_FIELD_RULES = {
     ),
 
     "enhancement_presence": (
-        '- Ύπαρξη Ενίσχυσης (περιοχές παθολογικής σκιαγραφικής ενίσχυσης): '
-        'Return «υπάρχει» if the report explicitly mentions pathological enhancement areas, '
-        'including phrases like «περιοχή/ες μη μαζομορφής σκιαγραφικής ενίσχυσης» or '
-        '«περιοχές παθολογικής σκιαγραφικής ενίσχυσης». '
-        'Return «δεν υπάρχει» only with explicit negation (π.χ. «Δεν παρατηρούνται …»). '
-        'IGNORE background/BPE statements such as «ενίσχυση παρεγχύματος / BPE» unless an explicit area/region of enhancement is stated. '
-        'Prefer ΣΥΜΠΕΡΑΣΜΑ if conflicting.'
+        "- Ύπαρξη Ενίσχυσης (περιοχές παθολογικής σκιαγραφικής ενίσχυσης):\n"
+        "Apply in this exact order:\n"
+        "  A) POSITIVE ⇒ «υπάρχει» if ANY explicit area/lesion of enhancement is stated "
+        "(π.χ. «περιοχή/ες μη μαζομορφής σκιαγραφικής ενίσχυσης», «περιοχές παθολογικής σκιαγραφικής ενίσχυσης», "
+        "NME, ή «γραμμοειδής/τμηματική/εστιακή κατανομή» δεμένη με συγκεκριμένη περιοχή/εστία).\n"
+        "  B) POSITIVE ⇒ «υπάρχει» if there is a NEGATION followed by a remainder/except clause for the REST of the exam, "
+        "even if the explicit περιοχή/εστία περιγράφεται αλλού στο κείμενο. Treat ANY of the following as such clauses: "
+        "«από τον λοιπό έλεγχο», «από τον έλεγχο του λοιπού μαζικού παρεγχύματος/μαστικού αδένα», "
+        "«από τον έλεγχο των μαστικών χώρων», «κατά τα λοιπά», «στον υπόλοιπο έλεγχο».\n"
+        "     If BOTH a plain negation and one of these remainder clauses appear in the same sentence/νοητική ενότητα, "
+        "you MUST return «υπάρχει» (the clause implies the rest is negative apart from a described περιοχή).\n"
+        "  C) NEGATIVE ⇒ «δεν υπάρχει» only when there is a plain/standalone negation with NO such remainder/except clause, "
+        "ιδίως διατυπώσεις του τύπου «Στη σημερινή εξέταση δεν …».\n"
+        "  D) NEITHER ⇒ null when only BPE/background is discussed (π.χ. «ενίσχυση παρεγχύματος/BPE …») "
+        "χωρίς ρητή περιοχή/εστία.\n"
+        "Σε ασυμφωνίες: προτίμησε ΣΥΜΠΕΡΑΣΜΑ/Conclusion· αλλιώς ΕΥΡΗΜΑΤΑ/Findings. "
+        "Οι remainder/except φράσεις αποτελούν ρητό τεκμήριο ύπαρξης."
     ),
 
 
-
     "birads": "- BI-RADS category as an integer 0..6. Accept I/II/III/IV/V/VI and map to 1..6.",
-    "exam_date": "- Exam date. Prefer YYYY-MM-DD. Normalize 31/03/2024 → 2024-03-31 when unambiguous.",
+    # "exam_date": "- Exam date. Prefer YYYY-MM-DD. Normalize 31/03/2024 → 2024-03-31 when unambiguous.",
     "bpe": "- Background Parenchymal Enhancement (BPE). Allowed: Minimal, Mild, Moderate, Marked. "
            "Greek: ΜΗΔΑΜΙΝΗ→Minimal, ΗΠΙΑ→Mild, ΜΕΤΡΙΑ→Moderate, ΕΝΤΟΝΗ→Marked.",
     "adc": "- ADC (Δείκτης διάχυσης νερού). Allowed: «χωρίς περιορισμό» ή «με περιορισμό». "
@@ -250,7 +259,45 @@ def _breast_fewshots() -> str:
         "Στο αριστερό μαστό παρατηρείται NME τμηματικής κατανομής. Καμία ρητή αναφορά για τον δεξιό μαστό.\n"
         "\"\"\"\n"
         "JSON: {\"breast\": \"Left\"}\n"
+        )
+
+def _enhancement_presence_fewshots() -> str:
+    return (
+        "Examples:\n"
+        # explicit area + remainder → υπάρχει
+        "Report:\n"
+        "\"\"\"\n"
+        "Στο άνω έξω τεταρτημόριο του αριστερού μαστού παρατηρείται περιοχή μη μαζομορφής "
+        "σκιαγραφικής ενίσχυσης. Δεν παρατηρούνται περιοχές παθολογικής σκιαγραφικής ενίσχυσης "
+        "με λοβιακή ή τμηματική κατανομή από τον λοιπό έλεγχο των μαστικών αδένων.\n"
+        "\"\"\"\n"
+        "JSON: {\"enhancement_presence\": \"υπάρχει\"}\n\n"
+
+        # pat0009 pattern: remainder phrase «… των μαστικών χώρων …» → υπάρχει
+        "Report:\n"
+        "\"\"\"\n"
+        "Δεν παρατηρούνται περιοχές παθολογικής σκιαγραφικής ενίσχυσης με λοβιακή ή τμηματική κατανομή "
+        "από τον έλεγχο των μαστικών χώρων.\n"
+        "\"\"\"\n"
+        "JSON: {\"enhancement_presence\": \"υπάρχει\"}\n\n"
+
+        # plain current-exam negation → δεν υπάρχει
+        "Report:\n"
+        "\"\"\"\n"
+        "Στη σημερινή εξέταση δεν παρατηρείται περιοχή παθολογικής σκιαγραφικής ενίσχυσης.\n"
+        "\"\"\"\n"
+        "JSON: {\"enhancement_presence\": \"δεν υπάρχει\"}\n\n"
+
+        # BPE only → null
+        "Report:\n"
+        "\"\"\"\n"
+        "Marked BPE αμφοτερόπλευρα χωρίς αναφορά σε συγκεκριμένη περιοχή/εστία ενίσχυσης.\n"
+        "\"\"\"\n"
+        "JSON: {\"enhancement_presence\": null}\n"
     )
+
+
+
 
 
 def build_prompt(report: str, prompt_keys: list[str]) -> str:
@@ -301,6 +348,9 @@ def build_prompt(report: str, prompt_keys: list[str]) -> str:
         lines.append(_laterality_fewshots())
     if ("breast" in prompt_keys):
         lines.append(_breast_fewshots())
+    
+    if ("enhancement_presence" in prompt_keys):
+        lines.append(_enhancement_presence_fewshots())  # <-- add this
     
 
     lines += [
@@ -1020,7 +1070,7 @@ def extract_and_merge(
 if __name__ == "__main__":
     report_paths = ["pat0001.txt", "pat0002.txt", "pat0003.txt"]
     report_paths = ["pat0002.txt"]
-    report_paths = ["pat0001.txt", "pat0002.txt", "pat0003.txt", "pat0004.txt", "pat0005.txt", "pat0006.txt"]
+    report_paths = ["pat0001.txt", "pat0002.txt", "pat0003.txt", "pat0004.txt", "pat0005.txt", "pat0006.txt", "pat0007.txt", "pat0008.txt", "pat0009.txt", "pat0010.txt"]
     # report_paths = os.listdir("txt/")
     report_paths.sort()
     print(f"Processing {len(report_paths)} reports...")

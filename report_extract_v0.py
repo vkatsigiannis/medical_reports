@@ -39,7 +39,7 @@ assert torch.cuda.is_available(), "CUDA GPU not found."
 
 # ======================= CONFIG =======================
 MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct" 
-# MODEL_ID = "mistralai/Mistral-7B-Instruct-v0.3"
+MODEL_ID = "mistralai/Mistral-7B-Instruct-v0.3"
 # MODEL_ID = "Qwen/Qwen2.5-7B-Instruct"
 # MODEL_ID = "meta-llama/Meta-Llama-3-8B-Instruct" # requires access
 # MODEL_ID = "Qwen/Qwen2.5-14B-Instruct"
@@ -147,6 +147,15 @@ _PROMPT_FIELD_RULES = {
     "nme_bilateral": "- Κατανομή NME: αμφοτερόπλευρη. Allowed: υπάρχει / δεν υπάρχει. "
             "Return null unless the text explicitly states the distribution type.",
 
+    "istoriko": "- Ιστορικό Ca (personal): Allowed: Yes / No.\n"
+        "Rules:\n"
+        "  • Yes only if the report explicitly states the PATIENT has a history of cancer "
+        "(e.g., «θετικό (οικογενειακό) ιστορικό καρκίνου …», ««θετικό (οικογενειακό) ιστορικό Ca …», s/p treatment for cancer).\n"
+        "  • No only if there is an explicit negation of PERSONAL cancer history "
+        "(e.g., «χωρίς/αρνητικό (οικογενειακό) ιστορικό καρκίνου», «δεν αναφέρεται  (οικογενειακό) ιστορικό καρκίνου»).\n"
+        # "  • Ignore FAMILY history (e.g., «αρνητικό οικογενειακό ιστορικό») — do not use it to set Yes/No.\n"
+        # "If no explicit personal history cue, return null.",
+
 }
 
 def build_prompt(report: str, prompt_keys: list[str]) -> str:
@@ -181,6 +190,8 @@ def build_prompt(report: str, prompt_keys: list[str]) -> str:
     if "nme_segmental" in prompt_keys: fields_stub.append('"nme_segmental": <υπάρχει|δεν υπάρχει or null>')
     if "nme_regional" in prompt_keys: fields_stub.append('"nme_regional": <υπάρχει|δεν υπάρχει or null>')
     if "nme_bilateral" in prompt_keys: fields_stub.append('"nme_bilateral": <υπάρχει|δεν υπάρχει or null>')
+    if "istoriko" in prompt_keys: fields_stub.append('"istoriko": <Yes|No or null>')
+
 
     lines += [
         "Output ONLY JSON:",
@@ -568,6 +579,25 @@ def _nme_type_regex(text: str, kind: str) -> Optional[str]:
         return "υπάρχει"
     return None
 
+# --- Ιστορικό Ca (personal) ---
+_HIST_POS_GR = re.compile(r"ιστορικ\w+[^\n\r]{0,40}?(?:καρκ\w+|\bca\b)", flags=re.IGNORECASE)
+_HIST_NEG_GR = re.compile(r"(?:αρνητικ\w+|χωρις|δεν\s+αναφερετ\w+)[^\n\r]{0,20}ιστορικ\w+[^\n\r]{0,40}?(?:καρκ\w+|\bca\b)", flags=re.IGNORECASE)
+_HIST_FAMILY = re.compile(r"οικογενειακ\w+", flags=re.IGNORECASE)
+
+def _near_family(t: str, start: int, end: int, window: int = 30) -> bool:
+    lo = max(0, start - window); hi = min(len(t), end + window)
+    return bool(_HIST_FAMILY.search(t[lo:hi]))
+
+def regex_istoriko(text: str) -> Optional[str]:
+    t = _deaccent_lower(text)
+    mneg = _HIST_NEG_GR.search(t)
+    if mneg and not _near_family(t, mneg.start(), mneg.end()):
+        return "No"
+    mpos = _HIST_POS_GR.search(t)
+    if mpos and not _near_family(t, mpos.start(), mpos.end()):
+        return "Yes"
+    return None
+
 
 # ================== DYNAMIC SCHEMA ====================
 FIELDS_SPEC = {
@@ -591,6 +621,7 @@ FIELDS_SPEC = {
     "nme_segmental": (Optional[Literal["υπάρχει", "δεν υπάρχει"]], None),
     "nme_regional":  (Optional[Literal["υπάρχει", "δεν υπάρχει"]], None),
     "nme_bilateral": (Optional[Literal["υπάρχει", "δεν υπάρχει"]], None),
+    "istoriko": (Optional[Literal["Yes", "No"]], None),
 }
 
 def make_model(keys: list[str]):
@@ -759,7 +790,6 @@ def extract_all(report_text: str, prompt_keys: list[str], use_regex_fallback: bo
             else:
                 if obj.get("nme_linear") not in ("υπάρχει", "δεν υπάρχει"):
                     obj["nme_linear"] = None
-
     if "nme_segmental" in prompt_keys:
         if nme_flag:
             if use_regex_fallback:
@@ -776,7 +806,6 @@ def extract_all(report_text: str, prompt_keys: list[str], use_regex_fallback: bo
             else:
                 if obj.get("nme_segmental") != "δεν υπάρχει":
                     obj["nme_segmental"] = None
-
 
     if "nme_regional" in prompt_keys:
         if not nme_flag:
@@ -799,10 +828,20 @@ def extract_all(report_text: str, prompt_keys: list[str], use_regex_fallback: bo
             else:
                 if obj.get("nme_bilateral") not in ("υπάρχει", "δεν υπάρχει"):
                     obj["nme_bilateral"] = None
-
+    
+    # --- Ιστορικό Ca (personal) ---
+    if "istoriko" in prompt_keys:
+        val = obj.get("istoriko")
+        if use_regex_fallback:
+            ev = regex_istoriko(report_text)
+            if ev is not None:
+                obj["istoriko"] = ev
+            else:
+                obj["istoriko"] = val if val in ("Yes", "No") else None
+        else:
+            obj["istoriko"] = val if val in ("Yes", "No") else None
 
     return {k: obj.get(k) for k in prompt_keys}
-
 
 def extract_and_merge(
     report_text: str,
@@ -871,8 +910,6 @@ def save_to_csv(pat_id: str, data: dict, csv_path: str = "reports_extracted.csv"
             writer.writerow(row)
 
 
-
-
 # ======================== MAIN ========================
 if __name__ == "__main__":
     report_paths = ["pat0001.txt", "pat0002.txt", "pat0003.txt"]
@@ -887,15 +924,17 @@ if __name__ == "__main__":
             report_text = f.read()
 
         groups = [
-            ["birads"], ["acr"],
-            ["maza"], ["mass_margins"], ["radial_spiculations"],
-            ["mass_enhancement_pattern"], ["non_enhancing_septa"],
-            ["nme_presence"], ["nme_margins"], ["nme_enhancement_pattern"],
-            ["nme_linear"], ["nme_segmental"], ["nme_regional"], ["nme_bilateral"],
-            ["bpe"], ["adc"], ["perfusion_curve"],
+            ["birads"], 
+            # ["acr"], 
+            ["istoriko"],
+            # ["maza"], ["mass_margins"], ["radial_spiculations"],
+            # ["mass_enhancement_pattern"], ["non_enhancing_septa"],
+            # ["nme_presence"], ["nme_margins"], ["nme_enhancement_pattern"],
+            # ["nme_linear"], ["nme_segmental"], ["nme_regional"], ["nme_bilateral"],
+            # ["bpe"], ["adc"], ["perfusion_curve"],
         ]
 
         data = extract_and_merge(report_text, groups, use_regex_fallback=True)
 
         pat_id = os.path.splitext(os.path.basename(report_path))[0]
-        save_to_csv(pat_id, data, csv_path="reports_extracted_temp.csv")
+        save_to_csv(pat_id, data, csv_path="reports_extracted_100.csv")
