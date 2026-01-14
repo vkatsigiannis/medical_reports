@@ -54,6 +54,29 @@ class MASS:
     _field_spec = (Optional[Literal["Yes", "No"]], None)
     _field_stub = '"MASS": <Yes|No>'
 
+class MassDiameter:
+    _prompt = ("""- Διάμετρος μάζας (MassDiameter): Output = number in millimeters, or null.
+        Decision order (apply strictly):
+        1) Scope: This field applies ONLY to solid masses (e.g., «μάζα», «συμπαγής αλλοίωση», solid/enhancing mass).
+            If the report mentions ONLY NME or ONLY cysts without a solid mass → return null.
+        2) Unit handling:
+            • Accept mm/χιλ. and cm/εκ. Normalize to mm (1.0 cm = 10.0 mm). Handle Greek decimal comma (7,5 → 7.5).
+        3) Multiple dimensions (e.g., 7.5 × 6 × 8 mm):
+            • Return the LARGEST single dimension in mm.
+        4) Ranges (e.g., 7–8 mm or 7–8 χιλ.):
+            • Return the UPPER bound in mm.
+        5) Multiple masses:
+            • If a target/index lesion is identified (e.g., by location/clip/biopsy/ΣΥΜΠΕΡΑΣΜΑ), use its diameter.
+            • Otherwise, return the LARGEST suspicious solid mass diameter.
+        6) Historical context:
+            • Prefer ΣΥΜΠΕΡΑΣΜΑ/Conclusion over other sections; otherwise prefer CURRENT exam over prior.
+        7) If the dynamic sequence wasn’t performed or the mass is not dimensioned, return null.
+        Output exactly one JSON number (millimeters) or null (no quotes).
+    """
+        )
+    _field_spec = (Optional[float], None)
+    _field_stub = '"MassDiameter": <number (mm) or null>'
+
 class NME:
     _prompt = ("""- Μη μαζόμορφη ενίσχυση (NME): Allowed values: Yes / No.
         Decision order (apply strictly):
@@ -80,6 +103,32 @@ class NME:
         )
     _field_spec = (Optional[Literal["Yes", "No"]], None)
     _field_stub = '"NME": <Yes|No>'
+
+class NMEDiameter:
+    _prompt = ("""- Διάμετρος/Έκταση NME (NMEDiameter): Output = number in millimeters, or null.
+        Decision order (apply strictly):
+        1) Scope: Applies ONLY to non-mass enhancement (NME), e.g. «μη μαζόμορφη ενίσχυση», 
+            «περιοχή μη μαζομορφής σκιαγραφικής ενίσχυσης». If the report mentions ONLY mass or ONLY cysts → null.
+        2) Units:
+            • Accept mm/χιλ. and cm/εκ. Normalize to mm (1.0 cm = 10.0 mm).
+            • Handle Greek decimal comma (π.χ. 7,5 → 7.5).
+        3) Multiple dimensions (e.g., 15 × 8 × 20 mm):
+            • Return the LARGEST single dimension in mm.
+        4) Ranges (e.g., 1–1,3 cm):
+            • Return the UPPER bound in mm.
+        5) Multiple NME regions:
+            • If a target/index region is identified (by location/biopsy/ΣΥΜΠΕΡΑΣΜΑ), use its size.
+            • Otherwise, return the LARGEST NME extent.
+        6) Text without a numeric size (e.g., only “segmental/linear/regional” distribution):
+            • Return null.
+        7) Historical context:
+            • Prefer ΣΥΜΠΕΡΑΣΜΑ/Conclusion over other sections; otherwise prefer CURRENT exam over prior.
+
+        Output exactly one JSON number (millimeters) or null (no quotes).
+    """
+        )
+    _field_spec = (Optional[float], None)
+    _field_stub = '"NMEDiameter": <number (mm) or null>'
 
 class NonEnhancingFindings:
     _prompt = ("""- Μη ενισχυόμενα ευρήματα (NonEnhancingFindings): Allowed values: Yes / No.

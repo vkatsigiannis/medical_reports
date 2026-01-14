@@ -4,7 +4,7 @@ from pathlib import Path
 from transformers.utils.logging import set_verbosity_error
 
 import lib
-from ReportExtractor import ReportExtractor
+from ReportExtractor import ReportExtractor, Patient
 
 if __name__ == "__main__":
 
@@ -33,9 +33,10 @@ if __name__ == "__main__":
     print(f"Processing {len(report_paths)} reports...")
     re = ReportExtractor(MODEL_ID)
     for report_path in report_paths:
+        
         pat_id, report_text = lib.get_report_data(report_path)
-        re.read_report(report_text)
-        results = []
+        patient = Patient(report_text)
+        patient.ID = pat_id
     
         groups = [
                 # ["BIRADS"], 
@@ -43,18 +44,25 @@ if __name__ == "__main__":
                 # ["ACR"],
                 # ["BPE"],
                 # ["MASS"],
-                # ["NME"],
+                # ["MassDiameter"],
+                ["NME"],
+                ["NMEDiameter"],
                 # ["NonEnhancingFindings"],
                 # ["CurveMorphology"],
                 # ["ADC"],
-                ["LATERALITY"],
+                # ["LATERALITY"],
             ]
 
         for group in groups:
-            result = re.extract_structured_data(keys=group)
-            results.append(result)
-            print("Extraction result:", result)
-        merged_results = lib.merge_dicts(results)
-        print("Merged result:", merged_results)
-        lib.save_to_csv(pat_id, merged_results, csv_path="reports_extracted_test.csv")
+            re.extract_structured_data(Patient=patient, keys=group)
+            # results.append(result)
+            # print("Extraction result:", result)
+        # merged_results = lib.merge_dicts(results)
+        # print("Merged result:", merged_results)
+        # print(patient.MASS_gate, patient.NME_gate, patient.LATERALITY, patient.BIRADS, patient.ADC)
+        for attr in vars(patient):
+            if attr not in ["report_text", "MASS_gate", "NME_gate"]:
+                print(f"{attr}: {getattr(patient, attr)}")
+        
+        patient.save_to_csv(csv_path="reports_extracted_test.csv")
         print('\n')

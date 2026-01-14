@@ -10,6 +10,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from transformers.utils.logging import set_verbosity_error
 
 import lib
+import csv
 
 os.environ["TORCHDYNAMO_DISABLE"] = "1"
 os.environ["TORCHINDUCTOR_DISABLE"] = "1"
@@ -28,7 +29,40 @@ os.environ["HUGGINGFACEHUB_API_TOKEN"] = "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"
 set_verbosity_error()
 assert torch.cuda.is_available(), "CUDA GPU not found."
 
-class ReportExtractor:
+class Patient:
+    def __init__(self, report_text: str):
+        
+        self.report_text = report_text
+        self.MASS_gate, self.NME_gate = True, True
+
+        # for key in ["LATERALITY", "MASS", "NME", "LITERACY"]:
+        #     setattr(self, key, None)
+
+    def save_to_csv(self, csv_path: str):
+        """
+        Args:
+            csv_path (str): Path to the CSV file.
+        """
+
+        fieldnames = getattr(self, '__dict__').keys()
+        to_remove = ['report_text', 'MASS_gate', 'NME_gate']
+        fieldnames = [k for k in fieldnames if k not in to_remove]
+
+        row = {k: getattr(self, k) for k in fieldnames}
+        file_exists = os.path.exists(csv_path)
+        # Use UTF-8 BOM on first write so Excel auto-detects encoding
+        if not file_exists:
+            with open(csv_path, "w", encoding="utf-8-sig", newline="") as f:
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer.writeheader()
+                writer.writerow(row)
+        else:
+            with open(csv_path, "a", encoding="utf-8", newline="") as f:
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer.writerow(row)
+
+
+class ReportExtractor(Patient):
     def __init__(self, MODEL_ID):
         """
         Initializes the ReportExtractor with a list of keys.
@@ -54,15 +88,7 @@ class ReportExtractor:
                                             cache_dir=str(CACHE_DIR),
                                             trust_remote_code=True)
         self.model = outlines.from_transformers(self.hf_model, self.hf_tok)
-        print("Model loaded:", self.MODEL_ID)
- 
-    def reset_class(self):
-        self.MASS_gate, self.NME_gate = True, True
-    
-    def read_report(self, report_text: str):
-        self.reset_class()
-        self.report_text = report_text
-        
+        print("Model loaded:", self.MODEL_ID)       
     
     def set_keys(self, keys: list[str]):
         
@@ -112,11 +138,20 @@ class ReportExtractor:
         fields = {k: self.FIELDS_SPEC[k] for k in self.keys}
         return create_model("ExtractSelected", **fields)
 
-    def extract_structured_data(self, keys: list[str]) -> dict:
+    def extract_structured_data(self, Patient, keys: list[str]) -> dict:
         self.set_keys(keys)
 
+        if 'MassDiameter' == self.keys[0] and not self.MASS_gate:
+            self.MassDiameter = None
+            return Patient
+        
+        if 'NMEDiameter' == self.keys[0] and not self.NME_gate:
+            self.NMEDiameter = None
+            return Patient
+
+
         DynModel = self.make_model()
-        main_prompt = self.apply_chat_template(self.build_prompt(self.report_text))
+        main_prompt = self.apply_chat_template(self.build_prompt(Patient.report_text))
         out = self.model(main_prompt, DynModel, max_new_tokens=320, do_sample=False)
         obj = DynModel.model_validate_json(out).model_dump()
 
@@ -124,7 +159,22 @@ class ReportExtractor:
             self.MASS_gate = True if obj.get('MASS', None)=='Yes' else False
         if 'NME' in self.keys:
             self.NME_gate = True if obj.get('NME', None)=='Yes' else False
+        
+        if 'MassDiameter' in self.keys and not self.MASS_gate:
+            self.MASS_Diameter = None
 
-        result = {k: obj.get(k) for k in self.keys}
+        if 'NMEDiameter' in self.keys and not self.NME_gate:
+            self.NMEDiameter = None
 
-        return result
+        # if 'LATERALITY' in self.keys:
+        #     Patient.LATERALITY = obj.get('LATERALITY', None)
+        # Patient.LATERALITY = obj.get(k)
+
+        for key in self.keys:
+            setattr(Patient, key, obj.get(key, None))
+        # Patient.LATERALITY = 
+
+        # result = {k: obj.get(k) for k in self.keys}
+
+        return Patient
+
