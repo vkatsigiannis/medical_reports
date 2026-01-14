@@ -5,6 +5,13 @@ from pydantic import Field, create_model
 
 from MedicalInformation import *
 
+def get_report_data(report_path: str) -> tuple[str, str]:
+    print(f"Processing report: {report_path}")
+    pat_id = os.path.splitext(os.path.basename(report_path))[0]
+    with open(os.path.join("txt/", report_path), "r", encoding="utf-8") as f:
+        report_text = f.read()
+    return pat_id, report_text
+
 def get_class_by_key(key):
     classes = {
         'BIRADS': Birads,

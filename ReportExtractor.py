@@ -55,6 +55,14 @@ class ReportExtractor:
                                             trust_remote_code=True)
         self.model = outlines.from_transformers(self.hf_model, self.hf_tok)
         print("Model loaded:", self.MODEL_ID)
+ 
+    def reset_class(self):
+        self.MASS_gate, self.NME_gate = True, True
+    
+    def read_report(self, report_text: str):
+        self.reset_class()
+        self.report_text = report_text
+        
     
     def set_keys(self, keys: list[str]):
         
@@ -104,12 +112,19 @@ class ReportExtractor:
         fields = {k: self.FIELDS_SPEC[k] for k in self.keys}
         return create_model("ExtractSelected", **fields)
 
-    def extract_structured_data(self, keys: list[str], report_text: str) -> dict:
+    def extract_structured_data(self, keys: list[str]) -> dict:
         self.set_keys(keys)
-        # --- main LLM pass only on requested keys ---
+
         DynModel = self.make_model()
-        main_prompt = self.apply_chat_template(self.build_prompt(report_text))
+        main_prompt = self.apply_chat_template(self.build_prompt(self.report_text))
         out = self.model(main_prompt, DynModel, max_new_tokens=320, do_sample=False)
         obj = DynModel.model_validate_json(out).model_dump()
 
-        return {k: obj.get(k) for k in self.keys}
+        if 'MASS' in self.keys:
+            self.MASS_gate = True if obj.get('MASS', None)=='Yes' else False
+        if 'NME' in self.keys:
+            self.NME_gate = True if obj.get('NME', None)=='Yes' else False
+
+        result = {k: obj.get(k) for k in self.keys}
+
+        return result
