@@ -31,6 +31,7 @@ if __name__ == "__main__":
     # report_paths.sort()
     # report_path = report_paths[:5]
     print(f"Processing {len(report_paths)} reports...")
+    re = ReportExtractor(MODEL_ID)
     for report_path in report_paths:
         print(f"Processing report: {report_path}")
         pat_id = os.path.splitext(os.path.basename(report_path))[0]
@@ -50,13 +51,10 @@ if __name__ == "__main__":
                 ["LATERALITY"],
             ]
 
-        # result = extract_all(report_text, groups[0])
-        results = []
+        results = []    
         for group in groups:
-            print(f" Extracting fields: {group}")
-            re = ReportExtractor(MODEL_ID, keys=group)
-
-            result = re.extract_structured_data(report_text)
+            print(f" Extracting fields: {group}")            
+            result = re.extract_structured_data(keys=group, report_text=report_text)
             results.append(result)
             print("Extraction result:", result)
         merged_results = lib.merge_dicts(results)

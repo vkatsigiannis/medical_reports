@@ -29,7 +29,7 @@ set_verbosity_error()
 assert torch.cuda.is_available(), "CUDA GPU not found."
 
 class ReportExtractor:
-    def __init__(self, MODEL_ID):
+    def __init__(self, MODEL_ID, keys: list[str]):
         """
         Initializes the ReportExtractor with a list of keys.
         Args:
@@ -40,24 +40,21 @@ class ReportExtractor:
             _PROMPT_FIELD_RULES (dict): Mapping of keys to their corresponding prompt rules, 
                 constructed by merging prompt rules from classes obtained via lib.get_class_by_key.
         """
-        self.MODEL_ID = MODEL_ID
-        self.hf_model = AutoModelForCausalLM.from_pretrained(
-            self.MODEL_ID,
+        hf_model = AutoModelForCausalLM.from_pretrained(
+            MODEL_ID,
             dtype=torch.float16,
             cache_dir=str(CACHE_DIR),
             trust_remote_code=True,
             device_map="auto",
             temperature=0.0,
         )
-        self.hf_tok = AutoTokenizer.from_pretrained(self.MODEL_ID,
+        self.hf_tok = AutoTokenizer.from_pretrained(MODEL_ID,
                                             use_fast=False,
                                             cache_dir=str(CACHE_DIR),
                                             trust_remote_code=True)
-        self.model = outlines.from_transformers(self.hf_model, self.hf_tok)
-        print("Model loaded:", self.MODEL_ID)
-    
-    def set_keys(self, keys: list[str]):
-        
+        self.model = outlines.from_transformers(hf_model, self.hf_tok)
+        print("Model loaded:", MODEL_ID)
+
         self.keys = keys
 
         self.FIELDS_SPEC = {
@@ -66,9 +63,10 @@ class ReportExtractor:
         
         self._PROMPT_FIELD_RULES = {
             **{k: lib.get_class_by_key(k)._prompt for k in self.keys},
+            # "birads": Birads().prompt,
         }
 
-    def build_prompt(self, report: str) -> str:
+    def build_prompt(self, report: str, prompt_keys: list[str]) -> str:
         lines = [
             "Task: Read the medical report (may be in Greek) and extract ONLY the following if present:"
             # "Task: Read the breast MRI report (Greek/English) and extract ONLY the requested fields.",
@@ -77,7 +75,7 @@ class ReportExtractor:
             # "- Return null unless there is an explicit cue in the text. Do not infer.",
             # "- Follow each field’s rule exactly."
             ]
-        for k in self.keys:
+        for k in prompt_keys:
             lines.append(self._PROMPT_FIELD_RULES[k])
         fields_stub = []
         for k in self.keys:
@@ -104,11 +102,10 @@ class ReportExtractor:
         fields = {k: self.FIELDS_SPEC[k] for k in self.keys}
         return create_model("ExtractSelected", **fields)
 
-    def extract_structured_data(self, keys: list[str], report_text: str) -> dict:
-        self.set_keys(keys)
+    def extract_structured_data(self, report_text: str) -> dict:
         # --- main LLM pass only on requested keys ---
         DynModel = self.make_model()
-        main_prompt = self.apply_chat_template(self.build_prompt(report_text))
+        main_prompt = self.apply_chat_template(self.build_prompt(report_text, self.keys))
         out = self.model(main_prompt, DynModel, max_new_tokens=320, do_sample=False)
         obj = DynModel.model_validate_json(out).model_dump()
 
