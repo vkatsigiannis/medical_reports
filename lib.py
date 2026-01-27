@@ -2,6 +2,7 @@ import csv
 import os
 from typing import Optional, Literal
 from pydantic import Field, create_model
+import pandas as pd
 
 from MedicalInformation import *
 
@@ -36,6 +37,46 @@ def merge_dicts(dicts: list[dict]) -> dict:
         result.update(d)
     return result
 
+
+def model_performace(path_pred: str, path_gt='GT - edit.xlsx') -> None:
+    # Read the GT Excel file into a pandas DataFrame
+
+    print("Evaluating model performance...")
+    gt_df = pd.read_excel(path_gt)
+    pred_df = pd.read_csv(path_pred)
+
+
+
+    # Ensure patient ID columns are named the same
+    pred_id_col = pred_df.columns[0]
+    gt_id_col = gt_df.columns[0]
+    pred_df = pred_df.rename(columns={pred_id_col: "patID"})
+    gt_df = gt_df.rename(columns={gt_id_col: "patID"})
+
+    # Merge on patID
+    merged = pd.merge(pred_df, gt_df, on="patID", suffixes=("_pred", "_gt"))
+
+    # For each column in prediction (excluding patID), compare with GT
+    results = {}
+    # print(merged.columns)
+    for col in pred_df.columns:
+        if col == "patID":
+            continue
+        pred_col = f"{col}_pred"
+        gt_col = f"{col}_gt"
+        if pred_col in merged.columns and gt_col in merged.columns:
+            matches = (merged[pred_col].astype("string").str.lower() == merged[gt_col].astype("string").str.lower()).sum()
+            total = len(merged)
+            results[col] = {"matches": matches, "total": total, "accuracy": matches / total if total > 0 else None}
+
+    # Print results
+    for col, res in results.items():
+        print(f"{col}: {res['matches']}/{res['total']} matches, accuracy={res['accuracy']:.2%}")
+
+
+    print(gt_df.head())    
+    print(pred_df.head())
+    
 
 
 # def save_to_csv(pat_id: str, data: dict, csv_path: str = "reports_extracted.csv") -> None:
