@@ -11,9 +11,9 @@ if __name__ == "__main__":
     os.environ["CUDA_VISIBLE_DEVICES"] = "5"
 
     # ======================= CONFIG =======================
-    MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct" 
+    # MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct" 
     # MODEL_ID = "mistralai/Mistral-7B-Instruct-v0.3"
-    # MODEL_ID = "Qwen/Qwen2.5-7B-Instruct"
+    MODEL_ID = "Qwen/Qwen2.5-7B-Instruct"
     # MODEL_ID = "meta-llama/Meta-Llama-3-8B-Instruct" # requires access
     # MODEL_ID = "Qwen/Qwen2.5-14B-Instruct"
     # MODEL_ID = "Qwen/Qwen2.5-32B-Instruct"
@@ -29,9 +29,10 @@ if __name__ == "__main__":
     # report_paths = ["pat0002.txt"]
     report_paths = os.listdir("txt/")
     report_paths.sort()
-    # report_path = report_paths[:5]
+    # report_path = report_paths[:50]
     print(f"Processing {len(report_paths)} reports...")
 
+    extract_information = True
     extract_information = False
 
     if extract_information:
@@ -44,17 +45,17 @@ if __name__ == "__main__":
             patient.ID = pat_id
         
             groups = [
-                    ["BIRADS"], 
-                    ["FamilyHistory"],
-                    ["ACR"],
-                    ["BPE"],
-                    ["MASS"],
-                    ["MassDiameter"],
-                    ["NME"],
-                    ["NMEDiameter"],
+                    # ["BIRADS"], 
+                    # ["FamilyHistory"],
+                    # ["ACR"],
+                    # ["BPE"],
+                    # ["MASS"],
+                    # ["MassDiameter"],
+                    # ["NME"],
+                    # ["NMEDiameter"],
                     ["NonEnhancingFindings"],
                     ["CurveMorphology"],
-                    ["ADC"],
+                    # ["ADC"],
                     ["LATERALITY"],
                 ]
 
@@ -69,8 +70,8 @@ if __name__ == "__main__":
                 if attr not in ["report_text", "MASS_gate", "NME_gate"]:
                     print(f"{attr}: {getattr(patient, attr)}")
             
-            patient.save_to_csv(csv_path="reports_extracted_100.csv")
+            patient.save_to_csv(csv_path="reports_extracted_test.csv")
             print('\n')
 
 
-    lib.model_performace(path_pred="reports_extracted_100.csv", path_gt='GT - edit.xlsx')
+    lib.model_performace(path_pred="reports_extracted_test.csv", path_gt='GT - edit.xlsx')

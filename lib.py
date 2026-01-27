@@ -37,45 +37,98 @@ def merge_dicts(dicts: list[dict]) -> dict:
         result.update(d)
     return result
 
-
-def model_performace(path_pred: str, path_gt='GT - edit.xlsx') -> None:
-    # Read the GT Excel file into a pandas DataFrame
-
+def model_performace(path_pred: str, path_gt: str = "GT - edit.xlsx") -> None:
     print("Evaluating model performance...")
     gt_df = pd.read_excel(path_gt)
     pred_df = pd.read_csv(path_pred)
 
-
-
-    # Ensure patient ID columns are named the same
-    pred_id_col = pred_df.columns[0]
-    gt_id_col = gt_df.columns[0]
-    pred_df = pred_df.rename(columns={pred_id_col: "patID"})
-    gt_df = gt_df.rename(columns={gt_id_col: "patID"})
+    # Normalize id column name
+    pred_df = pred_df.rename(columns={pred_df.columns[0]: "patID"})
+    gt_df   = gt_df.rename(columns={gt_df.columns[0]: "patID"})
 
     # Merge on patID
     merged = pd.merge(pred_df, gt_df, on="patID", suffixes=("_pred", "_gt"))
+    total = len(merged)
 
-    # For each column in prediction (excluding patID), compare with GT
     results = {}
-    # print(merged.columns)
     for col in pred_df.columns:
         if col == "patID":
             continue
         pred_col = f"{col}_pred"
-        gt_col = f"{col}_gt"
-        if pred_col in merged.columns and gt_col in merged.columns:
-            matches = (merged[pred_col].astype("string").str.lower() == merged[gt_col].astype("string").str.lower()).sum()
-            total = len(merged)
-            results[col] = {"matches": matches, "total": total, "accuracy": matches / total if total > 0 else None}
+        gt_col   = f"{col}_gt"
+        if pred_col not in merged.columns or gt_col not in merged.columns:
+            continue
 
-    # Print results
+        a_raw = merged[pred_col]
+        b_raw = merged[gt_col]
+
+        # NA positions equal
+        both_na = a_raw.isna() & b_raw.isna()
+
+        # Case-insensitive compare on normalized strings for non-NA
+        a = a_raw.astype("string").str.strip().str.casefold()
+        b = b_raw.astype("string").str.strip().str.casefold()
+
+        eq = a.eq(b)                    # boolean with <NA> where either side is NA
+        matches = (eq.fillna(False) | both_na).sum()
+
+        results[col] = {
+            "matches": int(matches),
+            "total": int(total),
+            "accuracy": (matches / total) if total > 0 else None,
+        }
+
     for col, res in results.items():
-        print(f"{col}: {res['matches']}/{res['total']} matches, accuracy={res['accuracy']:.2%}")
+        acc = f"{res['accuracy']:.2%}" if res["accuracy"] is not None else "n/a"
+        print(f"{col}: {res['matches']}/{res['total']} matches, accuracy={acc}")
 
-
-    print(gt_df.head())    
+    print(gt_df.head())
     print(pred_df.head())
+
+# def model_performace(path_pred: str, path_gt='GT - edit.xlsx') -> None:
+#     # Read the GT Excel file into a pandas DataFrame
+
+#     print("Evaluating model performance...")
+#     gt_df = pd.read_excel(path_gt)
+#     pred_df = pd.read_csv(path_pred)
+
+
+
+#     # Ensure patient ID columns are named the same
+#     pred_id_col = pred_df.columns[0]
+#     gt_id_col = gt_df.columns[0]
+#     pred_df = pred_df.rename(columns={pred_id_col: "patID"})
+#     gt_df = gt_df.rename(columns={gt_id_col: "patID"})
+
+#     # Merge on patID
+#     merged = pd.merge(pred_df, gt_df, on="patID", suffixes=("_pred", "_gt"))
+
+#     # For each column in prediction (excluding patID), compare with GT
+#     results = {}
+#     # print(merged.columns)
+#     for col in pred_df.columns:
+#         if col == "patID":
+#             continue
+#         pred_col = f"{col}_pred"
+#         gt_col = f"{col}_gt"
+#         # if pred_col in merged.columns and gt_col in merged.columns:
+#             # pred_vals = merged[pred_col].astype("string").str.lower().replace(None, "")
+#             # gt_vals = merged[gt_col].astype("string").str.lower().replace(None, "")
+#             # matches = ((pred_vals == gt_vals) | ((pred_vals == "") & (gt_vals == ""))).sum()
+#             # total = len(merged)
+#             # results[col] = {"matches": matches, "total": total, "accuracy": matches / total if total > 0 else None}
+#         if pred_col in merged.columns and gt_col in merged.columns:
+#             matches = (merged[pred_col].astype("string").str.lower() == merged[gt_col].astype("string").str.lower()).sum()
+#             total = len(merged)
+#             results[col] = {"matches": matches, "total": total, "accuracy": matches / total if total > 0 else None}
+
+#     # Print results
+#     for col, res in results.items():
+#         print(f"{col}: {res['matches']}/{res['total']} matches, accuracy={res['accuracy']:.2%}")
+
+
+#     print(gt_df.head())    
+#     print(pred_df.head())
     
 
 

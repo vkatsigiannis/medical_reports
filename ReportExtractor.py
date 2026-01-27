@@ -37,6 +37,47 @@ class Patient:
 
         # for key in ["LATERALITY", "MASS", "NME", "LITERACY"]:
         #     setattr(self, key, None)
+    
+    def post_process(self):
+        if hasattr(self, 'FamilyHistory'):
+            if getattr(self, 'FamilyHistory', None) is None:
+                setattr(self, 'FamilyHistory', 'No')
+        
+        if hasattr(self, 'ADC'):
+            adc_value = getattr(self, 'ADC', None)
+            print(f"Post-processing ADC value: {adc_value}, the type is {type(adc_value)}")
+            if adc_value is None: setattr(self, 'ADC', None)
+            else:
+                if adc_value >= 1.4: setattr(self, 'ADC', "NR")
+                elif 1.0 < adc_value < 1.4: setattr(self, 'ADC', "I")
+                elif adc_value <= 1.0: setattr(self, 'ADC', "R")
+                else: setattr(self, 'ADC', None)
+
+        return self
+
+        
+    def adc_category(adc_value: float) -> str:
+        """
+        Categorize ADC value according to thresholds:
+        • NON RESTRICTED (NR)  => ADC ≥ 1.4 ×10⁻³ mm²/s
+        • INTERMEDIATE (I)     => 1.0 < ADC < 1.4 ×10⁻³ mm²/s
+        • RESTRICTION (R)      => ADC ≤ 1.0 ×10⁻³ mm²/s
+        Args:
+        adc_value (float): ADC value in 10⁻³ mm²/s units.
+        Returns:
+        str: Category ("NR", "I", or "R")
+        """
+        if adc_value >= 1.4:
+            return "NR"
+        elif 1.0 < adc_value < 1.4:
+            return "I"
+        elif adc_value <= 1.0:
+            return "R"
+        else:
+            return None
+
+        
+        
 
     def save_to_csv(self, csv_path: str):
         """
@@ -155,9 +196,14 @@ class ReportExtractor(Patient):
         out = self.model(main_prompt, DynModel, max_new_tokens=320, do_sample=False)
         obj = DynModel.model_validate_json(out).model_dump()
 
+        if 'FamilyHistory' in self.keys:
+            if obj.get('FamilyHistory') is None: obj['FamilyHistory'] = 'No'
         if 'MASS' in self.keys:
+            if obj.get('MASS') is None: obj['MASS'] = 'No'
             self.MASS_gate = True if obj.get('MASS', None)=='Yes' else False
+            # self.MASS_gate = True if obj.get('MASS', None)=='Yes' else False
         if 'NME' in self.keys:
+            if obj.get('NME') is None: obj['NME'] = 'No'
             self.NME_gate = True if obj.get('NME', None)=='Yes' else False
         
         if 'MassDiameter' in self.keys and not self.MASS_gate:
@@ -173,6 +219,8 @@ class ReportExtractor(Patient):
         for key in self.keys:
             setattr(Patient, key, obj.get(key, None))
         # Patient.LATERALITY = 
+
+        Patient.post_process()
 
         # result = {k: obj.get(k) for k in self.keys}
 

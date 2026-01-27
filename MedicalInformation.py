@@ -33,25 +33,35 @@ class BPE:
 class MASS:
     _prompt = ("""- Μάζα (MASS): Allowed values: Yes / No.
         Decision order (apply strictly):
-        A) POSITIVE ⇒ Yes if there is an EXPLICIT, SOLID mass/lesion mention, e.g.:
-            • «μάζα», «συμπαγής αλλοίωση», «συμπαγής ενισχυόμενη αλλοίωση»,
-            «ενισχυόμενη μάζα/βλάβη», «χωροκατακτητική εξεργασία»,
-            or English: “mass”, “solid mass”, “solid enhancing mass”, “space-occupying lesion”.
-            • «οζώδης αλλοίωση» counts as Yes ONLY when clearly described as solid/enhancing
-            or explicitly equated with a mass (e.g., ινοαδένωμα ως συμπαγής αλλοίωση).
-        B) NEGATIVE ⇒ No if there is an explicit NEGATION of mass, e.g.:
-            • «δεν παρατηρείται/δεν αναδεικνύεται μάζα/συμπαγής αλλοίωση»,
-            English: “no (solid) mass is seen”.
-        C) EXCLUSIONS (do NOT count as mass by themselves):
-            • «μη μαζόμορφη ενίσχυση» (NME) without a solid mass statement.
-            • «κύστη/κύστεις/κυστικές αλλοιώσεις» without solid mass wording.
-            • BPE/background («ενίσχυση παρεγχύματος», BPE Minimal/Mild/Moderate/Marked).
-            • Calcifications only, clip, scar, artifact, duct ectasia, technical notes.
+
+        A) POSITIVE ⇒ Yes if the text describes a focal SOLID lesion. Count as mass when ANY of:
+        • «μάζα», «σχηματισμός», «βλάβη/ενισχυόμενη βλάβη», «συμπαγής αλλοίωση», «συμπαγής ενισχυόμενη αλλοίωση»,
+            «χωροκατακτητική εξεργασία», English: mass / solid mass / enhancing mass / space-occupying lesion.
+        • «αλλοίωση» used as a focal lesion with mass-like cues:
+            - has size/diameter (π.χ. «αλλοίωση διαμέτρου …»), OR
+            - has mass morphology (σαφή/ασαφή ή λοβωτά/ωοειδή όρια, οζώδης/οζίδιο), OR
+            - is tied to solid pathology (π.χ. «ινοαδένωμα», «κακοήθεια»).
+            Examples that COUNT: «αλλοίωση διαμέτρου 7 χιλ.», «ωοειδής αλλοίωση 1,3 εκ.», «αλλοίωση … συμβατή με ινοαδένωμα».
+        • English/Greek mixed phrasing like “solid/enhancing lesion” is also Yes.
+
+        B) NEGATIVE ⇒ No only with explicit negation of mass:
+        • «δεν παρατηρείται/δεν αναδεικνύεται μάζα/συμπαγής αλλοίωση/σχηματισμός/βλάβη», English: “no (solid) mass is seen”.
+
+        C) EXCLUSIONS (do NOT count by themselves):
+        • «μη μαζόμορφη ενίσχυση / NME» without solid mass wording.
+        • Κύστη/κύστεις/κυστικές αλλοιώσεις without solid mass wording.
+        • BPE/background only («ενίσχυση παρεγχύματος», BPE Minimal/Mild/Moderate/Marked).
+        • Μόνο αποτιτανώσεις, clip/scar, artifact, duct ectasia, ή καθαρά τεχνικές αναφορές.
+
         D) Conflicts: Prefer ΣΥΜΠΕΡΑΣΜΑ/Conclusion over other sections.
-        E) If evidence is ambiguous (e.g., “οζώδης” without “μάζα/συμπαγής/ενισχυόμενη”), return No.
+
+        E) Ambiguity rule: If the ONLY evidence is the bare word «αλλοίωση» with NO size/morphology/solid term and it could be NME,
+        return No. Otherwise treat focal, sized ή μορφολογικά περιγεγραμμένη «αλλοίωση» as mass.
+
         Output exactly one of: "Yes" or "No"."""
         )
-    _field_spec = (Optional[Literal["Yes", "No"]], None)
+
+    _field_spec = (Optional[Literal["Yes", "No"]])
     _field_stub = '"MASS": <Yes|No>'
 
 class MassDiameter:
@@ -101,7 +111,8 @@ class NME:
         F) Ambiguity: If wording is vague (e.g., distribution terms without an area) ⇒ No.
         Output exactly one of: "Yes" or "No"."""
         )
-    _field_spec = (Optional[Literal["Yes", "No"]], None)
+    # _field_spec = (Optional[Literal["Yes", "No"]], None)
+    _field_spec = (Optional[Literal["Yes", "No"]])
     _field_stub = '"NME": <Yes|No>'
 
 class NMEDiameter:
@@ -172,27 +183,56 @@ class CurveMorphology:
     _field_spec = (Optional[Literal[1, 2, 3]], None)
     _field_stub = '"CurveMorphology": <1|2|3 or null>'
 
+
+# ADC → numeric value in ×10⁻³ mm²/s (float) or null
 class ADC:
-    _prompt = ("""- Δείκτης διάχυσης νερού, ADC (ADC): Allowed values: NR | I | R.
-        Thresholds (use numeric ADC when present; normalize 1,2 ↔ 1.2):
-            • NON RESTRICTED (NR)  => ADC ≥ 1.4 ×10⁻³ mm²/s
-            • INTERMEDIATE (I)     => 1.0 < ADC < 1.4 ×10⁻³ mm²/s
-            • RESTRICTION (R)      => ADC ≤ 1.0 ×10⁻³ mm²/s
-        Qualitative-only cues (when no number is given):
-            • «χωρίς περιορισμό διάχυσης», «ελεύθερη διάχυση»  ⇒ NR
-            • «με περιορισμό διάχυσης», «περιορισμένη διάχυση» ⇒ R
-            • «ενδιάμεση/οριακή διάχυση» ⇒ I (only if explicitly stated)
-        Multiple lesions:
-            • If target/index lesion is named, use its ADC.
-            • If not, choose the worst category in descending risk: R > I > NR.
+    _prompt = (
+        """- Δείκτης διάχυσης νερού, ADC (ADC): Output = number in ×10⁻³ mm²/s, or null.
+        Parsing/normalization (apply strictly):
+        • Accept: "ADC 1,6 x10⁻³ mm²/s", "ADC 1.6×10^-3", "ADC=0.0016 mm²/s", "ADC 900×10⁻⁶ mm²/s".
+        • Normalize Greek comma to dot.
+        • If value is given with ×10⁻³ mm²/s → return the coefficient (e.g., 1.6).
+        • If value is given in mm²/s with NO exponent → multiply by 1000 (e.g., 0.0016 → 1.6).
+        • If value is given in ×10⁻⁶ mm²/s → divide by 1000 (e.g., 900×10⁻⁶ → 0.9).
+
+        Multiple values:
+        • If a target/index lesion is identified, use its ADC; otherwise return the lowest (worst) ADC reported.
+
+        Qualitative-only text:
+        • If only qualitative wording exists (e.g., "χωρίς περιορισμό διάχυσης", "ελεύθερη/περιορισμένη διάχυση") with NO number → return null.
+
         Context:
-            • Prefer ΣΥΜΠΕΡΑΣΜΑ/Conclusion over other sections.
-            • If DWI/ADC not performed or not characterized, return null.
-        Output exactly one of: NR, I, R, or null.
-        """
-        )
-    _field_spec = (Optional[Literal["NR", "I", "R"]], None)
-    _field_stub = '"ADC": <NR|I|R or null>'
+        • Prefer ΣΥΜΠΕΡΑΣΜΑ/Conclusion over other sections. If DWI/ADC not performed → null.
+
+        Output ONLY a JSON number (no units) or null.
+"""
+    )
+    _field_spec = (Optional[float], None)
+    _field_stub = '"ADC": <number (×10⁻³ mm²/s) or null>'
+
+
+
+# class ADC:
+#     _prompt = ("""- Δείκτης διάχυσης νερού, ADC (ADC): Allowed values: NR | I | R.
+#         Thresholds (use numeric ADC when present; normalize 1,2 ↔ 1.2):
+#             • NON RESTRICTED (NR)  => ADC ≥ 1.4 ×10⁻³ mm²/s
+#             • INTERMEDIATE (I)     => 1.0 < ADC < 1.4 ×10⁻³ mm²/s
+#             • RESTRICTION (R)      => ADC ≤ 1.0 ×10⁻³ mm²/s
+#         Qualitative-only cues (when no number is given):
+#             • «χωρίς περιορισμό διάχυσης», «ελεύθερη διάχυση»  ⇒ NR
+#             • «με περιορισμό διάχυσης», «περιορισμένη διάχυση» ⇒ R
+#             • «ενδιάμεση/οριακή διάχυση» ⇒ I (only if explicitly stated)
+#         Multiple lesions:
+#             • If target/index lesion is named, use its ADC.
+#             • If not, choose the worst category in descending risk: R > I > NR.
+#         Context:
+#             • Prefer ΣΥΜΠΕΡΑΣΜΑ/Conclusion over other sections.
+#             • If DWI/ADC not performed or not characterized, return null.
+#         Output exactly one of: NR, I, R, or null.
+#         """
+#         )
+#     _field_spec = (Optional[Literal["NR", "I", "R"]], None)
+#     _field_stub = '"ADC": <NR|I|R or null>'
 
 class LATERALITY:
     _prompt = ("""- Πλάγια εντόπιση ευρημάτων (LATERALITY): Allowed values: UNI | BIL.
