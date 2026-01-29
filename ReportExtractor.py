@@ -33,10 +33,16 @@ class Patient:
     def __init__(self, report_text: str):
         
         self.report_text = report_text
-        self.MASS_gate, self.NME_gate = True, True
+        self.mass_gate, self.nme_gate = True, True
 
         # for key in ["LATERALITY", "MASS", "NME", "LITERACY"]:
         #     setattr(self, key, None)
+
+    # def clear_attributes(self):
+    #     for attr in list(self.__dict__.keys()):
+    #         delattr(self, attr)
+        
+    #     return self
     
     def post_process(self):
         if hasattr(self, 'FamilyHistory'):
@@ -52,6 +58,35 @@ class Patient:
                 elif 1.0 < adc_value < 1.4: setattr(self, 'ADC', "I")
                 elif adc_value <= 1.0: setattr(self, 'ADC', "R")
                 else: setattr(self, 'ADC', None)
+            
+        if hasattr(self, 'massMargins'):
+            massMargins_value = getattr(self, 'massMargins', None)
+            # print(f"Post-processing ADC value: {adc_value}, the type is {type(adc_value)}")
+            if massMargins_value is None: setattr(self, 'massMargins', None)
+            if massMargins_value == 'σαφή': setattr(self, 'massMargins', 'C')
+            if massMargins_value == 'ασαφή': setattr(self, 'massMargins', 'NC')
+        
+        if hasattr(self, 'massInternalEnhancement'):
+            massInternalEnhancement_value = getattr(self, 'massInternalEnhancement', None)
+            # print(f"Post-processing ADC value: {adc_value}, the type is {type(adc_value)}")
+            if massInternalEnhancement_value is None: setattr(self, 'massInternalEnhancement', None)
+            if massInternalEnhancement_value == 'ομοιογενής': setattr(self, 'massInternalEnhancement', 'HO')
+            if massInternalEnhancement_value == 'ανομοιογενής': setattr(self, 'massInternalEnhancement', 'HE')
+
+        
+        if hasattr(self, 'nmeMargins'):
+            nmeMargins_value = getattr(self, 'nmeMargins', None)
+            # print(f"Post-processing ADC value: {adc_value}, the type is {type(adc_value)}")
+            if nmeMargins_value is None: setattr(self, 'nmeMargins', None)
+            if nmeMargins_value == 'σαφή': setattr(self, 'nmeMargins', 'C')
+            if nmeMargins_value == 'ασαφή': setattr(self, 'nmeMargins', 'NC')
+        
+        if hasattr(self, 'nmeInternalEnhancement'):
+            nmeInternalEnhancement_value = getattr(self, 'nmeInternalEnhancement', None)
+            # print(f"Post-processing ADC value: {adc_value}, the type is {type(adc_value)}")
+            if nmeInternalEnhancement_value is None: setattr(self, 'nmeInternalEnhancement', None)
+            if nmeInternalEnhancement_value == 'ομοιογενής': setattr(self, 'nmeInternalEnhancement', 'HO')
+            if nmeInternalEnhancement_value == 'ανομοιογενής': setattr(self, 'nmeInternalEnhancement', 'HE')
 
         return self
 
@@ -79,15 +114,20 @@ class Patient:
         
         
 
-    def save_to_csv(self, csv_path: str):
+    def save_to_csv(self, ORDERED_FIELDS, csv_path: str):
         """
         Args:
             csv_path (str): Path to the CSV file.
         """
 
         fieldnames = getattr(self, '__dict__').keys()
-        to_remove = ['report_text', 'MASS_gate', 'NME_gate']
+
+        to_remove = ['report_text', 'mass_gate', 'nme_gate']
         fieldnames = [k for k in fieldnames if k not in to_remove]
+        fieldnames = ORDERED_FIELDS
+
+        # print(fieldnames)
+        
 
         row = {k: getattr(self, k) for k in fieldnames}
         file_exists = os.path.exists(csv_path)
@@ -189,12 +229,20 @@ class ReportExtractor(Patient):
     def extract_structured_data(self, Patient, keys: list[str], include_fewshots: bool = False) -> dict:
         self.set_keys(keys, include_fewshots=include_fewshots)
 
-        if 'MassDiameter' == self.keys[0] and not self.MASS_gate:
-            self.MassDiameter = None
+        if 'massDiameter' == self.keys[0] and not self.mass_gate:
+            self.massDiameter = None
+        if 'massMargins' == self.keys[0] and not self.mass_gate:
+            self.massMargins = None
+        if 'massInternalEnhancement' == self.keys[0] and not self.mass_gate:
+            self.massInternalEnhancement = None
             # return Patient
         
-        if 'NMEDiameter' == self.keys[0] and not self.NME_gate:
-            self.NMEDiameter = None
+        if 'nmeDiameter' == self.keys[0] and not self.nme_gate:
+            self.nmeDiameter = None
+        if 'nmeMargins' == self.keys[0] and not self.nme_gate:
+            self.nmeMargins = None
+        if 'nmeInternalEnhancement' == self.keys[0] and not self.nme_gate:
+            self.nmeInternalEnhancement = None
             # return Patient
 
 
@@ -207,17 +255,17 @@ class ReportExtractor(Patient):
         #     if obj.get('FamilyHistory') is None: obj['FamilyHistory'] = 'No'
         if 'MASS' in self.keys:
             if obj.get('MASS') is None: obj['MASS'] = 'No'
-            self.MASS_gate = True if obj.get('MASS', None)=='Yes' else False
-            # self.MASS_gate = True if obj.get('MASS', None)=='Yes' else False
+            self.mass_gate = True if obj.get('MASS', None)=='Yes' else False
+            # self.mass_gate = True if obj.get('MASS', None)=='Yes' else False
         if 'NME' in self.keys:
             if obj.get('NME') is None: obj['NME'] = 'No'
-            self.NME_gate = True if obj.get('NME', None)=='Yes' else False
+            self.nme_gate = True if obj.get('NME', None)=='Yes' else False
         
-        if 'MassDiameter' in self.keys and not self.MASS_gate:
-            self.MassDiameter = None
+        if 'massDiameter' in self.keys and not self.mass_gate:
+            self.massDiameter = None
 
-        if 'NMEDiameter' in self.keys and not self.NME_gate:
-            self.NMEDiameter = None
+        if 'nmeDiameter' in self.keys and not self.nme_gate:
+            self.nmeDiameter = None
 
         # if 'LATERALITY' in self.keys:
         #     Patient.LATERALITY = obj.get('LATERALITY', None)

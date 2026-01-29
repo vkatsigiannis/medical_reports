@@ -64,8 +64,8 @@ class MASS:
     _field_spec = (Optional[Literal["Yes", "No"]])
     _field_stub = '"MASS": <Yes|No>'
 
-class MassDiameter:
-    _prompt = ("""- Διάμετρος μάζας (MassDiameter): Output = number in millimeters, or null.
+class massDiameter:
+    _prompt = ("""- Διάμετρος μάζας (massDiameter): Output = number in millimeters, or null.
         Decision order (apply strictly):
         1) Scope: This field applies ONLY to solid masses (e.g., «μάζα», «συμπαγής αλλοίωση», solid/enhancing mass).
             If the report mentions ONLY NME or ONLY cysts without a solid mass → return null.
@@ -85,7 +85,49 @@ class MassDiameter:
     """
         )
     _field_spec = (Optional[float], None)
-    _field_stub = '"MassDiameter": <number (mm) or null>'
+    _field_stub = '"massDiameter": <number (mm) or null>'
+
+class massMargins:
+    _prompt = ("""- Όρια μάζας (massMargins): Allowed values: σαφή | ασαφή | null.
+
+    Εφαρμογή ΜΟΝΟ σε MASS (συμπαγή μάζα). Αν δεν υπάρχει μάζα ή δεν περιγράφονται όρια → null.
+
+    Κανόνες (εφάρμοσε με αυτή τη σειρά):
+    1) σαφή ⇒ όταν τα όρια της μάζας δηλώνονται καθαρά, π.χ.:
+        «σαφή όρια», «καλά περιγεγραμμένη», «well-circumscribed/clear margins».
+    2) ασαφή ⇒ όταν τα όρια δηλώνονται ακαθόριστα/δυσδιάκριτα, π.χ.:
+        «ασαφή όρια», «ακαθόριστα/δυσδιάκριτα/θολά όρια», «ill-defined/indistinct margins».
+    3) Αγνόησε χαρακτηρισμούς που δεν δηλώνουν καθαρά σαφή/ασαφή (π.χ. «λοβωτά», «ωοειδής») αν δεν συνοδεύονται
+        από ρητή δήλωση για σαφή/ασαφή όρια.
+    4) Πολλαπλές μάζες: αν υπάρχει target/index, χρησιμοποίησε τα δικά της όρια· αλλιώς επί διαφωνίας επέλεξε «ασαφή».
+    5) Προτεραιότητα: ΣΥΜΠΕΡΑΣΜΑ/Conclusion > ΕΥΡΗΜΑΤΑ/Findings.
+
+    Output exactly one of: «σαφή», «ασαφή», ή null."""
+        )
+
+    _field_spec = (Optional[Literal["σαφή", "ασαφή"]], None)
+    _field_stub = '"massMargins": <σαφή|ασαφή or null>'
+
+class massInternalEnhancement:
+    _prompt = (
+        """- Εσωτερικό πρότυπο ενίσχυσης μάζας (massInternalEnhancement): Allowed values: ομοιογενής | ανομοιογενής | null.
+
+        Εφαρμογή ΜΟΝΟ σε MASS (συμπαγή μάζα). Αν δεν υπάρχει μάζα ή δεν περιγράφεται εσωτερικό πρότυπο ενίσχυσης → null.
+
+        Κανόνες (εφάρμοσε με αυτή τη σειρά):
+        1) ομοιογενής ⇒ όταν δηλώνεται ρητά ομοιογενής/ομοιόμορφη ενίσχυση (Greek/English: «ομοιογενής», homogeneous, uniform).
+        2) ανομοιογενής ⇒ όταν δηλώνεται ρητά ανομοιογενής/ετερογενής ενίσχυση (Greek/English: «ανομοιογενής», «ετερογενής», heterogeneous).
+        3) Αγνόησε μοτίβα που δεν περιγράφουν εσωτερική ομοιογένεια/ανομοιογένεια (π.χ. «περιφερική/δακτυλιοειδής», NME terms).
+        4) Πολλαπλές μάζες: αν υπάρχει target/index, χρησιμοποίησε το πρότυπο της· αλλιώς, επί διαφωνίας, επίλεξε «ανομοιογενής».
+        5) Προτεραιότητα: ΣΥΜΠΕΡΑΣΜΑ/Conclusion > ΕΥΡΗΜΑΤΑ/Findings.
+
+        Output exactly ένα από: «ομοιογενής», «ανομοιογενής», ή null.
+        """
+    )
+    _field_spec = (Optional[Literal["ομοιογενής", "ανομοιογενής"]], None)
+    _field_stub = '"massInternalEnhancement": <ομοιογενής|ανομοιογενής or null>'
+
+
 
 class NME:
     _prompt = ("""- Μη μαζόμορφη ενίσχυση (NME): Allowed values: Yes / No.
@@ -115,8 +157,8 @@ class NME:
     _field_spec = (Optional[Literal["Yes", "No"]])
     _field_stub = '"NME": <Yes|No>'
 
-class NMEDiameter:
-    _prompt = ("""- Διάμετρος/Έκταση NME (NMEDiameter): Output = number in millimeters, or null.
+class nmeDiameter:
+    _prompt = ("""- Διάμετρος/Έκταση NME (nmeDiameter): Output = number in millimeters, or null.
         Decision order (apply strictly):
         1) Scope: Applies ONLY to non-mass enhancement (NME), e.g. «μη μαζόμορφη ενίσχυση», 
             «περιοχή μη μαζομορφής σκιαγραφικής ενίσχυσης». If the report mentions ONLY mass or ONLY cysts → null.
@@ -139,7 +181,51 @@ class NMEDiameter:
     """
         )
     _field_spec = (Optional[float], None)
-    _field_stub = '"NMEDiameter": <number (mm) or null>'
+    _field_stub = '"nmeDiameter": <number (mm) or null>'
+
+class nmeMargins:
+    _prompt = (
+        """- Όρια NME (nmeMargins): Allowed values: σαφή | ασαφή | null.
+
+        Εφαρμογή ΜΟΝΟ σε NME (μη μαζόμορφη ενίσχυση). Αν δεν υπάρχει NME ή δεν περιγράφονται όρια → null.
+
+        Κανόνες (εφάρμοσε με αυτή τη σειρά):
+        1) σαφή ⇒ όταν τα όρια της περιοχής NME δηλώνονται καθαρά, π.χ.:
+            «σαφή όρια», «καλά περιγεγραμμένη περιοχή», English: well-defined/clear/distinct margins.
+        2) ασαφή ⇒ όταν τα όρια δηλώνονται ακαθόριστα/δυσδιάκριτα, π.χ.:
+            «ασαφή/ακαθόριστα/δυσδιάκριτα/θολά όρια», English: ill-defined/indistinct/poorly marginated.
+        3) ΜΗ χαρακτηριστικά ορίων (μη τα χρησιμοποιείς μόνοι τους): «γραμμοειδής/τμηματική/περιοχική/περιφερική κατανομή»
+            ή περιγραφές μοτίβου ενίσχυσης χωρίς σαφή αναφορά σε όρια.
+        4) Πολλαπλές NME περιοχές: αν υπάρχει target/index, χρησιμοποίησε τα δικά της όρια· αλλιώς, επί διαφωνίας, επίλεξε «ασαφή».
+        5) Προτεραιότητα: ΣΥΜΠΕΡΑΣΜΑ/Conclusion > ΕΥΡΗΜΑΤΑ/Findings.
+
+        Output exactly ένα από: «σαφή», «ασαφή», ή null.
+        """
+    )
+    _field_spec = (Optional[Literal["σαφή", "ασαφή"]], None)
+    _field_stub = '"nmeMargins": <σαφή|ασαφή or null>'
+
+class nmeInternalEnhancement:
+    _prompt = (
+        """- Εσωτερικό πρότυπο ενίσχυσης NME (nmeInternalEnhancement): Allowed values: ομοιογενής | ανομοιογενής | null.
+
+        Εφαρμογή ΜΟΝΟ σε NME (μη μαζόμορφη ενίσχυση). Αν δεν υπάρχει NME ή δεν περιγράφεται εσωτερικό πρότυπο → null.
+
+        Κανόνες (εφάρμοσε με αυτή τη σειρά):
+        1) ομοιογενής ⇒ ρητή αναφορά σε ομοιογενή/ομοιόμορφη ενίσχυση (homogeneous/uniform).
+        2) ανομοιογενής ⇒ ρητή αναφορά σε ανομοιογενή/ετερογενή ενίσχυση (heterogeneous).
+        3) Αγνόησε όρους ΚΑΤΑΝΟΜΗΣ (γραμμοειδής/τμηματική/περιοχική/περιφερική) ή «clumped/clustered ring»,
+            εκτός αν συνοδεύονται από ρητή δήλωση ομοιογένειας/ανομοιογένειας.
+        4) Πολλαπλές NME περιοχές: αν υπάρχει target/index, χρησιμοποίησε αυτήν· αλλιώς, επί διαφωνίας, επίλεξε «ανομοιογενής».
+        5) Προτεραιότητα: ΣΥΜΠΕΡΑΣΜΑ/Conclusion > ΕΥΡΗΜΑΤΑ/Findings.
+
+        Output exactly ένα από: «ομοιογενής», «ανομοιογενής», ή null.
+        """
+    )
+    _field_spec = (Optional[Literal["ομοιογενής", "ανομοιογενής"]], None)
+    _field_stub = '"nmeInternalEnhancement": <ομοιογενής|ανομοιογενής or null>'
+
+
 
 class NonEnhancingFindings:
     _prompt = (

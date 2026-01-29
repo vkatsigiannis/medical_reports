@@ -46,17 +46,21 @@ if __name__ == "__main__":
         
             groups = [
                     ["BIRADS"], 
-                    # ["FamilyHistory"],
-                    # ["ACR"],
-                    # ["BPE"],
+                    ["FamilyHistory"],
+                    ["ACR"],
+                    ["BPE"],
                     ["MASS"],
-                    ["MassDiameter"],
+                    ["massInternalEnhancement"],
+                    ["massMargins"],
+                    ["massDiameter"],
                     ["NME"],
-                    ["NMEDiameter"],
-                    # ["NonEnhancingFindings"],
-                    # ["CurveMorphology"],
+                    ["nmeInternalEnhancement"],
+                    ["nmeMargins"],
+                    ["nmeDiameter"],
+                    ["NonEnhancingFindings"],
+                    ["CurveMorphology"],
                     # ["ADC"],
-                    # ["LATERALITY"],
+                    ["LATERALITY"],
                 ]
 
             for group in groups:
@@ -65,13 +69,16 @@ if __name__ == "__main__":
                 # print("Extraction result:", result)
             # merged_results = lib.merge_dicts(results)
             # print("Merged result:", merged_results)
-            # print(patient.MASS_gate, patient.NME_gate, patient.LATERALITY, patient.BIRADS, patient.ADC)
-            for attr in vars(patient):
-                if attr not in ["report_text", "MASS_gate", "NME_gate"]:
+            # print(patient.mass_gate, patient.nme_gate, patient.LATERALITY, patient.BIRADS, patient.ADC)
+            # for attr in vars(patient):
+            ORDERED_FIELDS = ["ID"] + [k for grp in groups for k in grp]
+
+            for attr in ORDERED_FIELDS:
+                if attr not in ["report_text", "mass_gate", "nme_gate"]:
                     print(f"{attr}: {getattr(patient, attr)}")
             
-            patient.save_to_csv(csv_path="reports_extracted_test.csv")
+            patient.save_to_csv(ORDERED_FIELDS, csv_path="reports_extracted_test.csv")
             print('\n')
-
+            
 
     lib.model_performace(path_pred="reports_extracted_test.csv", path_gt='GT - edit.xlsx', per_class_breakdown=True)

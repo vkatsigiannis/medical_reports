@@ -19,10 +19,17 @@ def get_class_by_key(key):
         'FamilyHistory': FamilyHistory,
         'ACR': ACR,
         'BPE': BPE,
+
         'MASS': MASS,
-        'MassDiameter': MassDiameter,
+        'massDiameter': massDiameter,
+        'massMargins': massMargins,
+        'massInternalEnhancement': massInternalEnhancement,
+
         'NME': NME,
-        'NMEDiameter': NMEDiameter,
+        'nmeDiameter': nmeDiameter,
+        'nmeMargins': nmeMargins,
+        'nmeInternalEnhancement': nmeInternalEnhancement,
+
         'NonEnhancingFindings': NonEnhancingFindings,
         'CurveMorphology': CurveMorphology,
         'ADC': ADC,
@@ -38,9 +45,6 @@ def merge_dicts(dicts: list[dict]) -> dict:
     return result
 
 
-import pandas as pd
-
-import pandas as pd
 
 def model_performace(
     path_pred: str,
