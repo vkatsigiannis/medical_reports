@@ -33,7 +33,7 @@ if __name__ == "__main__":
     print(f"Processing {len(report_paths)} reports...")
 
     extract_information = True
-    extract_information = False
+    # extract_information = False
 
     if extract_information:
 
@@ -45,22 +45,22 @@ if __name__ == "__main__":
             patient.ID = pat_id
         
             groups = [
-                    # ["BIRADS"], 
+                    ["BIRADS"], 
                     # ["FamilyHistory"],
                     # ["ACR"],
                     # ["BPE"],
-                    # ["MASS"],
-                    # ["MassDiameter"],
-                    # ["NME"],
-                    # ["NMEDiameter"],
-                    ["NonEnhancingFindings"],
-                    ["CurveMorphology"],
+                    ["MASS"],
+                    ["MassDiameter"],
+                    ["NME"],
+                    ["NMEDiameter"],
+                    # ["NonEnhancingFindings"],
+                    # ["CurveMorphology"],
                     # ["ADC"],
-                    ["LATERALITY"],
+                    # ["LATERALITY"],
                 ]
 
             for group in groups:
-                re.extract_structured_data(Patient=patient, keys=group)
+                re.extract_structured_data(Patient=patient, keys=group, include_fewshots=False)
                 # results.append(result)
                 # print("Extraction result:", result)
             # merged_results = lib.merge_dicts(results)
@@ -74,4 +74,4 @@ if __name__ == "__main__":
             print('\n')
 
 
-    lib.model_performace(path_pred="reports_extracted_test.csv", path_gt='GT - edit.xlsx')
+    lib.model_performace(path_pred="reports_extracted_test.csv", path_gt='GT - edit.xlsx', per_class_breakdown=True)

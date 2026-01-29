@@ -142,27 +142,28 @@ class NMEDiameter:
     _field_stub = '"NMEDiameter": <number (mm) or null>'
 
 class NonEnhancingFindings:
-    _prompt = ("""- Μη ενισχυόμενα ευρήματα (NonEnhancingFindings): Allowed values: Yes / No.
-        Decision order (apply strictly):
-        A) POSITIVE ⇒ Yes if ANY non-enhancing lesion is explicitly present:
-            • Cysts: «κύστη», «κύστεις», «κυστική/ες αλλοίωση/ες», English: “cyst(s)”, “simple cyst”.
-            Treat simple cysts as non-enhancing even if “non-enhancing” is not stated.
-            • Any lesion described as non-enhancing: «μη ενισχυόμενη», «χωρίς (σκιαγραφική) ενίσχυση»,
-            English: “non-enhancing”, “no contrast enhancement”.
-        B) NEGATIVE ⇒ No if there is an explicit negation of such findings:
-            • «Δεν παρατηρούνται/αναδεικνύονται κύστεις/κυστικές αλλοιώσεις»,
-            «δεν υπάρχει μη ενισχυόμενη βλάβη», English: “no cysts”, “no non-enhancing lesion”.
-            • If only enhancing findings are reported (masses or NME) and no cysts/non-enhancing lesion is mentioned.
-        C) EXCLUSIONS (do NOT count as non-enhancing by themselves):
-            • NME/«μη μαζόμορφη ενίσχυση» (this is enhancing).
-            • Solid/enhancing mass.
-            • BPE/background («ενίσχυση παρεγχύματος», BPE Minimal/Mild/Moderate/Marked).
-            • Calcifications only, clip/scar, artifacts, duct ectasia, technical notes.
-        D) Conflicts: Prefer ΣΥΜΠΕΡΑΣΜΑ/Conclusion over other sections.
-            Output exactly one of: "Yes" or "No"."""
+    _prompt = (
+        """- Μη ενισχυόμενα ευρήματα = κύστεις (NonEnhancingFindings): Allowed values: Yes / No.
+
+    Decision order (apply strictly):
+    A) POSITIVE ⇒ Yes if the CURRENT report states the presence of cysts / cystic lesions, e.g.:
+    • «κύστη», «κύστεις», «κυστική αλλοίωση/ες», «κυστικός/ή/ό», English: “cyst(s)”, “simple cyst”, “cystic lesion”.
+    • Treat simple/τυπικές κύστεις as non-enhancing even if “μη ενισχυόμενη” is not written.
+    • If there is a negation FOLLOWED BY a remainder/except clause for the rest of the exam (π.χ. «… από τον λοιπό έλεγχο»),
+        treat as Yes (there is a described cyst, the rest is negative).
+
+    B) NEGATIVE ⇒ No only if there is an explicit plain negation without remainder clause, e.g.:
+    • «Δεν παρατηρούνται/αναδεικνύονται κύστεις/κυστικές αλλοιώσεις», English: “no cysts”.
+    • Or the report lists only enhancing findings (mass/NME) and nowhere mentions cysts.
+
+
+
+    • Prefer ΣΥΜΠΕΡΑΣΜΑ if τμήματα διαφωνούν. Προτεραιότητα στην τρέχουσα εξέταση.
+    Output exactly one of: "Yes" or "No"."""
         )
     _field_spec = (Optional[Literal["Yes", "No"]], None)
     _field_stub = '"NonEnhancingFindings": <Yes|No>'
+
 
 class CurveMorphology:
     _prompt = ("""- Αιμοδυναμική καμπύλη (CurveMorphology): Allowed values: 1 / 2 / 3.

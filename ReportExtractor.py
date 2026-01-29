@@ -131,16 +131,23 @@ class ReportExtractor(Patient):
         self.model = outlines.from_transformers(self.hf_model, self.hf_tok)
         print("Model loaded:", self.MODEL_ID)       
     
-    def set_keys(self, keys: list[str]):
+    def set_keys(self, keys: list[str], include_fewshots: bool = False):
+
+        self.include_fewshots = include_fewshots
         
         self.keys = keys
+
+        for key in self.keys: setattr(Patient, key, None)
+
+
+        # print("Extracting fields:", self.keys, getattr(Patient, key))
 
         self.FIELDS_SPEC = {
             **{k: lib.get_class_by_key(k)._field_spec for k in self.keys},
         }
         
         self._PROMPT_FIELD_RULES = {
-            **{k: lib.get_class_by_key(k)._prompt for k in self.keys},
+            **{k: lib.get_class_by_key(k)._prompt + lib.get_class_by_key(k)._fewshots if self.include_fewshots else lib.get_class_by_key(k)._prompt for k in self.keys},
         }
 
     def build_prompt(self, report: str) -> str:
@@ -179,16 +186,16 @@ class ReportExtractor(Patient):
         fields = {k: self.FIELDS_SPEC[k] for k in self.keys}
         return create_model("ExtractSelected", **fields)
 
-    def extract_structured_data(self, Patient, keys: list[str]) -> dict:
-        self.set_keys(keys)
+    def extract_structured_data(self, Patient, keys: list[str], include_fewshots: bool = False) -> dict:
+        self.set_keys(keys, include_fewshots=include_fewshots)
 
         if 'MassDiameter' == self.keys[0] and not self.MASS_gate:
             self.MassDiameter = None
-            return Patient
+            # return Patient
         
         if 'NMEDiameter' == self.keys[0] and not self.NME_gate:
             self.NMEDiameter = None
-            return Patient
+            # return Patient
 
 
         DynModel = self.make_model()
@@ -196,8 +203,8 @@ class ReportExtractor(Patient):
         out = self.model(main_prompt, DynModel, max_new_tokens=320, do_sample=False)
         obj = DynModel.model_validate_json(out).model_dump()
 
-        if 'FamilyHistory' in self.keys:
-            if obj.get('FamilyHistory') is None: obj['FamilyHistory'] = 'No'
+        # if 'FamilyHistory' in self.keys:
+        #     if obj.get('FamilyHistory') is None: obj['FamilyHistory'] = 'No'
         if 'MASS' in self.keys:
             if obj.get('MASS') is None: obj['MASS'] = 'No'
             self.MASS_gate = True if obj.get('MASS', None)=='Yes' else False
@@ -207,7 +214,7 @@ class ReportExtractor(Patient):
             self.NME_gate = True if obj.get('NME', None)=='Yes' else False
         
         if 'MassDiameter' in self.keys and not self.MASS_gate:
-            self.MASS_Diameter = None
+            self.MassDiameter = None
 
         if 'NMEDiameter' in self.keys and not self.NME_gate:
             self.NMEDiameter = None
