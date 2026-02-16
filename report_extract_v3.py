@@ -17,7 +17,7 @@ if __name__ == "__main__":
     # MODEL_ID = "meta-llama/Meta-Llama-3-8B-Instruct" # requires access
     # MODEL_ID = "Qwen/Qwen2.5-14B-Instruct"
     # MODEL_ID = "Qwen/Qwen2.5-32B-Instruct"
-    # MODEL_ID = "Qwen/Qwen2.5-72B-Instruct"
+    MODEL_ID = "Qwen/Qwen2.5-72B-Instruct"
     # MODEL_ID = "microsoft/Phi-3.5-mini-instruct" # AttributeError: 'DynamicCache' object has no attribute 'seen_tokens'
     # MODEL_ID = "nvidia/Mistral-NeMo-12B-Instruct"
     # MODEL_ID = "mistralai/Mistral-Nemo-Instruct-2407"
@@ -33,7 +33,7 @@ if __name__ == "__main__":
     print(f"Processing {len(report_paths)} reports...")
 
     extract_information = True
-    # extract_information = False
+    extract_information = False
 
     if extract_information:
 
@@ -81,4 +81,4 @@ if __name__ == "__main__":
             print('\n')
             
 
-    lib.model_performace(path_pred="reports_extracted_test.csv", path_gt='GT - edit.xlsx', per_class_breakdown=True)
+    lib.model_performace(path_pred="reports_extracted_test_32B.csv", path_gt='GT - edit.xlsx', per_class_breakdown=True)
