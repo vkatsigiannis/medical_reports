@@ -45,6 +45,9 @@ class Patient:
     #     return self
     
     def post_process(self):
+        
+
+        _DIAM_RE = re.compile(r"^\s*(\d+(?:[.,]\d+)?)\s*(mm|cm)\s*$", flags=re.IGNORECASE)
         if hasattr(self, 'FamilyHistory'):
             if getattr(self, 'FamilyHistory', None) is None:
                 setattr(self, 'FamilyHistory', 'No')
@@ -59,6 +62,38 @@ class Patient:
                 elif adc_value <= 1.0: setattr(self, 'ADC', "R")
                 else: setattr(self, 'ADC', None)
             
+            
+
+        # --- Post-process massDiameter: "<number> mm|cm" -> float mm (value only) ---
+        if hasattr(self, 'massDiameter'):
+            massDiameter_value = getattr(self, 'massDiameter', None)
+
+            if massDiameter_value is None:
+                setattr(self, 'massDiameter', None)
+            else:
+                # Expect strings like "12 mm" or "1.2 cm"
+                if isinstance(massDiameter_value, str):
+                    m = _DIAM_RE.match(massDiameter_value)
+                    if not m:
+                        setattr(self, 'massDiameter', None)
+                    else:
+                        num_str, unit = m.group(1), m.group(2).lower()
+                        num_str = num_str.replace(",", ".")
+                        try:
+                            num = float(num_str)
+                        except ValueError:
+                            setattr(self, 'massDiameter', None)
+                        else:
+                            if unit == "cm":
+                                num *= 10.0
+                            # store numeric value only (mm)
+                            setattr(self, 'massDiameter', num)
+                else:
+                    # If model returns unexpected type
+                    setattr(self, 'massDiameter', massDiameter_value)
+
+
+            
         if hasattr(self, 'massMargins'):
             massMargins_value = getattr(self, 'massMargins', None)
             # print(f"Post-processing ADC value: {adc_value}, the type is {type(adc_value)}")
@@ -72,6 +107,13 @@ class Patient:
             if massInternalEnhancement_value is None: setattr(self, 'massInternalEnhancement', None)
             if massInternalEnhancement_value == 'ομοιογενής': setattr(self, 'massInternalEnhancement', 'HO')
             if massInternalEnhancement_value == 'ανομοιογενής': setattr(self, 'massInternalEnhancement', 'HE')
+        
+        if hasattr(self, 'LATERALITY'):
+            LATERALITY_value = getattr(self, 'LATERALITY', None)
+            # print(f"Post-processing ADC value: {adc_value}, the type is {type(adc_value)}")
+            if LATERALITY_value is None: setattr(self, 'LATERALITY', None)
+            if LATERALITY_value == 'UNILATERAL': setattr(self, 'LATERALITY', 'UNI')
+            if LATERALITY_value == 'BILATERAL': setattr(self, 'LATERALITY', 'BIL')
 
         
         if hasattr(self, 'nmeMargins'):
@@ -81,6 +123,34 @@ class Patient:
             if nmeMargins_value == 'σαφή': setattr(self, 'nmeMargins', 'C')
             if nmeMargins_value == 'ασαφή': setattr(self, 'nmeMargins', 'NC')
         
+        # --- Post-process nmeDiameter: "<number> mm|cm" -> float mm (value only) ---
+        if hasattr(self, 'nmeDiameter'):
+            nmeDiameter_value = getattr(self, 'nmeDiameter', None)
+
+            if nmeDiameter_value is None:
+                setattr(self, 'nmeDiameter', None)
+            else:
+                # Expect strings like "18 mm" or "1.3 cm"
+                if isinstance(nmeDiameter_value, str):
+                    m = _DIAM_RE.match(nmeDiameter_value)
+                    if not m:
+                        setattr(self, 'nmeDiameter', None)
+                    else:
+                        num_str, unit = m.group(1), m.group(2).lower()
+                        num_str = num_str.replace(",", ".")
+                        try:
+                            num = float(num_str)
+                        except ValueError:
+                            setattr(self, 'nmeDiameter', None)
+                        else:
+                            if unit == "cm":
+                                num *= 10.0
+                            # store numeric value only (mm)
+                            setattr(self, 'nmeDiameter', num)
+                else:
+                    # If model returns unexpected type
+                    setattr(self, 'nmeDiameter', nmeDiameter_value)
+        
         if hasattr(self, 'nmeInternalEnhancement'):
             nmeInternalEnhancement_value = getattr(self, 'nmeInternalEnhancement', None)
             # print(f"Post-processing ADC value: {adc_value}, the type is {type(adc_value)}")
@@ -89,8 +159,7 @@ class Patient:
             if nmeInternalEnhancement_value == 'ανομοιογενής': setattr(self, 'nmeInternalEnhancement', 'HE')
 
         return self
-
-        
+      
     def adc_category(adc_value: float) -> str:
         """
         Categorize ADC value according to thresholds:
@@ -110,9 +179,6 @@ class Patient:
             return "R"
         else:
             return None
-
-        
-        
 
     def save_to_csv(self, ORDERED_FIELDS, csv_path: str):
         """
@@ -141,6 +207,117 @@ class Patient:
             with open(csv_path, "a", encoding="utf-8", newline="") as f:
                 writer = csv.DictWriter(f, fieldnames=fieldnames)
                 writer.writerow(row)
+
+from openai import OpenAI
+
+class OpenAIReportExtractor(Patient):
+    def __init__(self, model_id: str = "gpt-4.1"):
+        self.client = OpenAI()
+        self.model_id = model_id
+
+    def set_keys(self, keys: list[str], include_fewshots: bool = False):
+        self.include_fewshots = include_fewshots
+        self.keys = keys
+        for key in self.keys: setattr(Patient, key, None)
+        self.FIELDS_SPEC = {
+            **{k: lib.get_class_by_key(k)._field_spec for k in self.keys},
+        }
+        self._PROMPT_FIELD_RULES = {
+            **{k: lib.get_class_by_key(k)._prompt + lib.get_class_by_key(k)._fewshots if self.include_fewshots else lib.get_class_by_key(k)._prompt for k in self.keys},
+        }
+
+    def build_prompt(self, report: str) -> str:
+        lines = [
+            "Task: Read the medical report (may be in Greek) and extract ONLY the following if present:"
+            ]
+        for k in self.keys:
+            lines.append(self._PROMPT_FIELD_RULES[k])
+        fields_stub = []
+        for k in self.keys:
+            fields_stub = [lib.get_class_by_key(k)._field_stub for k in self.keys]
+
+        lines += [
+            "Output ONLY JSON:",
+            "{ " + ", ".join(fields_stub) + " }",
+            "If an item is missing, return null. No extra keys.\n",
+            f'Report:\n"""\n{report}\n"""\nJSON:'
+        ]
+        return "\n".join(lines)
+    
+    def make_model(self):
+        fields = {k: self.FIELDS_SPEC[k] for k in self.keys}
+        return create_model("ExtractSelected", **fields)
+
+    def extract_structured_data(self, Patient, keys: list[str], include_fewshots: bool = False) -> dict:
+        self.set_keys(keys, include_fewshots=include_fewshots)
+
+        
+
+        if not Patient.mass_gate:
+            if 'massDiameter' == self.keys[0]: setattr(Patient, 'massDiameter', None)
+            if 'massMargins' == self.keys[0]: setattr(Patient, 'massMargins', None)
+            if 'massInternalEnhancement' == self.keys[0]: setattr(Patient, 'massInternalEnhancement', None)
+
+            if 'massDiameter' == self.keys[0] or 'massMargins' == self.keys[0] or 'massInternalEnhancement' == self.keys[0]:
+                Patient.post_process()
+
+                return Patient
+            
+        if not Patient.nme_gate:
+            if 'nmeDiameter' == self.keys[0]: setattr(Patient, 'nmeDiameter', None)
+            if 'nmeMargins' == self.keys[0]: setattr(Patient, 'nmeMargins', None)
+            if 'nmeInternalEnhancement' == self.keys[0]: setattr(Patient, 'nmeInternalEnhancement', None)
+
+            if 'nmeDiameter' == self.keys[0] or 'nmeMargins' == self.keys[0] or 'nmeInternalEnhancement' == self.keys[0]:
+                Patient.post_process()
+
+                return Patient
+
+
+        DynModel = self.make_model()
+        schema = DynModel.model_json_schema()
+        schema["additionalProperties"] = False  # flat object => enforce no extra keys
+
+        main_prompt = self.apply_chat_template(self.build_prompt(Patient.report_text))
+        out = self.model(main_prompt, DynModel, max_new_tokens=320, do_sample=False)
+        obj = DynModel.model_validate_json(out).model_dump()
+
+        if 'MASS' in self.keys:
+            if obj.get('MASS') is None: obj['MASS'] = 'No'
+            Patient.mass_gate = True if obj.get('MASS', None)=='Yes' else False
+        if 'NME' in self.keys:
+            if obj.get('NME') is None: obj['NME'] = 'No'
+            Patient.nme_gate = True if obj.get('NME', None)=='Yes' else False
+        
+        
+        if 'massDiameter' == self.keys[0] and not Patient.mass_gate:
+            obj['massDiameter'] = None
+        if 'massMargins' == self.keys[0] and not Patient.mass_gate:
+            obj['massMargins'] = None
+        if 'massInternalEnhancement' == self.keys[0] and not Patient.mass_gate:
+            obj['massInternalEnhancement'] = None
+            # return Patient
+        
+        if 'nmeDiameter' == self.keys[0] and not Patient.nme_gate:
+            obj['nmeDiameter'] = None
+            # Patient.nmeDiameter = None
+        if 'nmeMargins' == self.keys[0] and not Patient.nme_gate:
+            obj['nmeMargins'] = None
+        if 'nmeInternalEnhancement' == self.keys[0] and not Patient.nme_gate:
+            obj['nmeInternalEnhancement'] = None
+        
+        # if 'massDiameter' in self.keys and not Patient.mass_gate:
+        #     Patient.massDiameter = None
+
+        # if 'nmeDiameter' in self.keys and not Patient.nme_gate:
+        #     Patient.nmeDiameter = None
+
+        for key in self.keys:
+            setattr(Patient, key, obj.get(key, None))
+
+        Patient.post_process()
+
+        return Patient
 
 
 class ReportExtractor(Patient):
@@ -193,6 +370,7 @@ class ReportExtractor(Patient):
     def build_prompt(self, report: str) -> str:
         lines = [
             "Task: Read the medical report (may be in Greek) and extract ONLY the following if present:"
+            # "Task: Read the breast MRI medical report (may be in Greek) and extract ONLY the the requested fields:"
             # "Task: Read the breast MRI report (Greek/English) and extract ONLY the requested fields.",
             # "Global rules:",
             # "- Output JSON only. No prose.",
@@ -229,21 +407,27 @@ class ReportExtractor(Patient):
     def extract_structured_data(self, Patient, keys: list[str], include_fewshots: bool = False) -> dict:
         self.set_keys(keys, include_fewshots=include_fewshots)
 
-        if 'massDiameter' == self.keys[0] and not self.mass_gate:
-            self.massDiameter = None
-        if 'massMargins' == self.keys[0] and not self.mass_gate:
-            self.massMargins = None
-        if 'massInternalEnhancement' == self.keys[0] and not self.mass_gate:
-            self.massInternalEnhancement = None
-            # return Patient
         
-        if 'nmeDiameter' == self.keys[0] and not self.nme_gate:
-            self.nmeDiameter = None
-        if 'nmeMargins' == self.keys[0] and not self.nme_gate:
-            self.nmeMargins = None
-        if 'nmeInternalEnhancement' == self.keys[0] and not self.nme_gate:
-            self.nmeInternalEnhancement = None
-            # return Patient
+
+        if not Patient.mass_gate:
+            if 'massDiameter' == self.keys[0]: setattr(Patient, 'massDiameter', None)
+            if 'massMargins' == self.keys[0]: setattr(Patient, 'massMargins', None)
+            if 'massInternalEnhancement' == self.keys[0]: setattr(Patient, 'massInternalEnhancement', None)
+
+            if 'massDiameter' == self.keys[0] or 'massMargins' == self.keys[0] or 'massInternalEnhancement' == self.keys[0]:
+                Patient.post_process()
+
+                return Patient
+            
+        if not Patient.nme_gate:
+            if 'nmeDiameter' == self.keys[0]: setattr(Patient, 'nmeDiameter', None)
+            if 'nmeMargins' == self.keys[0]: setattr(Patient, 'nmeMargins', None)
+            if 'nmeInternalEnhancement' == self.keys[0]: setattr(Patient, 'nmeInternalEnhancement', None)
+
+            if 'nmeDiameter' == self.keys[0] or 'nmeMargins' == self.keys[0] or 'nmeInternalEnhancement' == self.keys[0]:
+                Patient.post_process()
+
+                return Patient
 
 
         DynModel = self.make_model()
@@ -251,33 +435,40 @@ class ReportExtractor(Patient):
         out = self.model(main_prompt, DynModel, max_new_tokens=320, do_sample=False)
         obj = DynModel.model_validate_json(out).model_dump()
 
-        # if 'FamilyHistory' in self.keys:
-        #     if obj.get('FamilyHistory') is None: obj['FamilyHistory'] = 'No'
         if 'MASS' in self.keys:
             if obj.get('MASS') is None: obj['MASS'] = 'No'
-            self.mass_gate = True if obj.get('MASS', None)=='Yes' else False
-            # self.mass_gate = True if obj.get('MASS', None)=='Yes' else False
+            Patient.mass_gate = True if obj.get('MASS', None)=='Yes' else False
         if 'NME' in self.keys:
             if obj.get('NME') is None: obj['NME'] = 'No'
-            self.nme_gate = True if obj.get('NME', None)=='Yes' else False
+            Patient.nme_gate = True if obj.get('NME', None)=='Yes' else False
         
-        if 'massDiameter' in self.keys and not self.mass_gate:
-            self.massDiameter = None
+        
+        if 'massDiameter' == self.keys[0] and not Patient.mass_gate:
+            obj['massDiameter'] = None
+        if 'massMargins' == self.keys[0] and not Patient.mass_gate:
+            obj['massMargins'] = None
+        if 'massInternalEnhancement' == self.keys[0] and not Patient.mass_gate:
+            obj['massInternalEnhancement'] = None
+            # return Patient
+        
+        if 'nmeDiameter' == self.keys[0] and not Patient.nme_gate:
+            obj['nmeDiameter'] = None
+            # Patient.nmeDiameter = None
+        if 'nmeMargins' == self.keys[0] and not Patient.nme_gate:
+            obj['nmeMargins'] = None
+        if 'nmeInternalEnhancement' == self.keys[0] and not Patient.nme_gate:
+            obj['nmeInternalEnhancement'] = None
+        
+        # if 'massDiameter' in self.keys and not Patient.mass_gate:
+        #     Patient.massDiameter = None
 
-        if 'nmeDiameter' in self.keys and not self.nme_gate:
-            self.nmeDiameter = None
-
-        # if 'LATERALITY' in self.keys:
-        #     Patient.LATERALITY = obj.get('LATERALITY', None)
-        # Patient.LATERALITY = obj.get(k)
+        # if 'nmeDiameter' in self.keys and not Patient.nme_gate:
+        #     Patient.nmeDiameter = None
 
         for key in self.keys:
             setattr(Patient, key, obj.get(key, None))
-        # Patient.LATERALITY = 
 
         Patient.post_process()
-
-        # result = {k: obj.get(k) for k in self.keys}
 
         return Patient
 

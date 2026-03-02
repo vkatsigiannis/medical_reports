@@ -64,28 +64,66 @@ class MASS:
     _field_spec = (Optional[Literal["Yes", "No"]])
     _field_stub = '"MASS": <Yes|No>'
 
+    
 class massDiameter:
-    _prompt = ("""- Διάμετρος μάζας (massDiameter): Output = number in millimeters, or null.
+    _prompt = ("""
+        - Διάμετρος μάζας (massDiameter): Output = STRING with value+unit, or null.
+        Allowed unit formats (output must match exactly one):
+        • "<number> mm"
+        • "<number> cm"
+        where <number> may be integer or decimal (dot or comma allowed in input, but output must use dot).
+
+        Goal (STRICT):
+        Extract the primary diameter of a SOLID MASS exactly as stated in the report, preserving the ORIGINAL unit (mm or cm).
+        Do NOT convert units. If unclear or not stated, return null.
+
         Decision order (apply strictly):
-        1) Scope: This field applies ONLY to solid masses (e.g., «μάζα», «συμπαγής αλλοίωση», solid/enhancing mass).
-            If the report mentions ONLY NME or ONLY cysts without a solid mass → return null.
-        2) Unit handling:
-            • Accept mm/χιλ. and cm/εκ. Normalize to mm (1.0 cm = 10.0 mm). Handle Greek decimal comma (7,5 → 7.5).
-        3) Multiple dimensions (e.g., 7.5 × 6 × 8 mm):
-            • Return the LARGEST single dimension in mm.
-        4) Ranges (e.g., 7–8 mm or 7–8 χιλ.):
-            • Return the UPPER bound in mm.
-        5) Multiple masses:
-            • If a target/index lesion is identified (e.g., by location/clip/biopsy/ΣΥΜΠΕΡΑΣΜΑ), use its diameter.
-            • Otherwise, return the LARGEST suspicious solid mass diameter.
-        6) Historical context:
-            • Prefer ΣΥΜΠΕΡΑΣΜΑ/Conclusion over other sections; otherwise prefer CURRENT exam over prior.
-        7) If the dynamic sequence wasn’t performed or the mass is not dimensioned, return null.
-        Output exactly one JSON number (millimeters) or null (no quotes).
-    """
+        1) Scope:
+        This field applies ONLY if a solid mass is present (e.g., «μάζα», «ογκίδιο», «συμπαγής αλλοίωση», «οζώδης αλλοίωση»).
+        If the report mentions ONLY NME/μη μαζική ενίσχυση or ONLY cysts/κύστεις without a solid mass → return null.
+
+        2) Evidence priority:
+        Prefer «ΣΥΜΠΕΡΑΣΜΑ». If missing/empty, use «ΕΥΡΗΜΑΤΑ / ΠΕΡΙΓΡΑΦΗ».
+        Prefer CURRENT exam measurements over prior comparisons (e.g., "σε σχέση με προηγούμενη").
+
+        3) Unit handling (NO conversion):
+        Accept only mm/χιλ./χιλιοστά and cm/εκ./εκατοστά.
+        Keep the unit as written in the report:
+        • If the report states cm/εκ. → output in cm.
+        • If the report states mm/χιλ. → output in mm.
+        Normalize only the numeric formatting:
+        • Convert Greek decimal comma to dot in OUTPUT (7,5 → 7.5).
+        Do not change the numeric value due to unit conversion.
+
+        4) Multiple dimensions:
+        If dimensions are given as A×B×C (or A x B x C, with any separators like "×", "x", "Χ", "*"):
+        • Set diameter = A only (the FIRST number).
+        • Preserve the unit as stated for that set of dimensions.
+        Examples:
+            - "7,5 × 6 × 8 mm" → "7.5 mm"
+            - "1,2 x 0,8 cm" → "1.2 cm"
+
+        5) Single dimension:
+        If a single measurement is given (e.g., "μάζα 9 mm", "ογκίδιο 1,1 εκ.") → output that value+unit.
+
+        6) Ranges:
+        If a range is given (e.g., "7–8 mm", "0,7–0,8 εκ.") → output the UPPER bound with the SAME unit.
+        Example: "7–8 mm" → "8 mm"; "0,7–0,8 εκ." → "0.8 cm"
+
+        7) Multiple masses:
+        • If a target/index lesion is identified (location, clip, biopsy site, or explicitly prioritized in «ΣΥΜΠΕΡΑΣΜΑ»), use its diameter.
+        • Otherwise, select the most suspicious solid mass described in «ΣΥΜΠΕΡΑΣΜΑ».
+        • If still multiple, select the largest diameter (based on the extracted A value) BUT keep its original unit.
+
+        8) If dynamic sequence wasn’t performed, or no size is provided for a solid mass → return null.
+
+        Output format (STRICT):
+        Return exactly one JSON string like "12 mm" or "1.2 cm", or null.
+        No extra keys. No extra text.
+        """
         )
-    _field_spec = (Optional[float], None)
-    _field_stub = '"massDiameter": <number (mm) or null>'
+    _field_spec = (Optional[str], None)
+    _field_stub = '"massDiameter": <string (mm or cm) or null>'
 
 class massMargins:
     _prompt = ("""- Όρια μάζας (massMargins): Allowed values: σαφή | ασαφή | null.
@@ -158,30 +196,70 @@ class NME:
     _field_stub = '"NME": <Yes|No>'
 
 class nmeDiameter:
-    _prompt = ("""- Διάμετρος/Έκταση NME (nmeDiameter): Output = number in millimeters, or null.
-        Decision order (apply strictly):
-        1) Scope: Applies ONLY to non-mass enhancement (NME), e.g. «μη μαζόμορφη ενίσχυση», 
-            «περιοχή μη μαζομορφής σκιαγραφικής ενίσχυσης». If the report mentions ONLY mass or ONLY cysts → null.
-        2) Units:
-            • Accept mm/χιλ. and cm/εκ. Normalize to mm (1.0 cm = 10.0 mm).
-            • Handle Greek decimal comma (π.χ. 7,5 → 7.5).
-        3) Multiple dimensions (e.g., 15 × 8 × 20 mm):
-            • Return the LARGEST single dimension in mm.
-        4) Ranges (e.g., 1–1,3 cm):
-            • Return the UPPER bound in mm.
-        5) Multiple NME regions:
-            • If a target/index region is identified (by location/biopsy/ΣΥΜΠΕΡΑΣΜΑ), use its size.
-            • Otherwise, return the LARGEST NME extent.
-        6) Text without a numeric size (e.g., only “segmental/linear/regional” distribution):
-            • Return null.
-        7) Historical context:
-            • Prefer ΣΥΜΠΕΡΑΣΜΑ/Conclusion over other sections; otherwise prefer CURRENT exam over prior.
+    _prompt = ("""
+- Διάμετρος/Έκταση NME (nmeDiameter): Output = STRING with value+unit, or null.
+  Allowed unit formats (output must match exactly one):
+  • "<number> mm"
+  • "<number> cm"
+  where <number> may be integer or decimal (dot or comma allowed in input, but output must use dot).
 
-        Output exactly one JSON number (millimeters) or null (no quotes).
-    """
+Goal (STRICT):
+Extract the primary extent/diameter of NME exactly as stated in the report, preserving the ORIGINAL unit (mm or cm).
+Do NOT convert units. If unclear or not stated, return null.
+
+Decision order (apply strictly):
+1) Scope:
+   Applies ONLY if NME is present, e.g.:
+   • «μη μαζική ενίσχυση»
+   • «μη μαζόμορφη ενίσχυση»
+   • «περιοχή μη μαζομορφής σκιαγραφικής ενίσχυσης»
+   If the report mentions ONLY mass/μάζα or ONLY cysts/κύστεις without NME → return null.
+
+2) Evidence priority:
+   Prefer «ΣΥΜΠΕΡΑΣΜΑ». If missing/empty, use «ΕΥΡΗΜΑΤΑ / ΠΕΡΙΓΡΑΦΗ».
+   Prefer CURRENT exam measurements over prior comparisons.
+
+3) Unit handling (NO conversion):
+   Accept only mm/χιλ./χιλιοστά and cm/εκ./εκατοστά.
+   Keep the unit as written in the report:
+   • If the report states cm/εκ. → output in cm.
+   • If the report states mm/χιλ. → output in mm.
+   Normalize only the numeric formatting in OUTPUT:
+   • Convert Greek decimal comma to dot (7,5 → 7.5).
+   Do not change the numeric value due to unit conversion.
+
+4) Multiple dimensions:
+   If NME extent is given as A×B×C (or A x B x C, with any separators like "×", "x", "Χ", "*"):
+   • Set diameter/extent = A only (the FIRST number).
+   • Preserve the unit as stated for that set of dimensions.
+   Examples:
+     - "15 × 8 × 20 mm" → "15 mm"
+     - "1,5 x 0,8 cm" → "1.5 cm"
+
+5) Single dimension:
+   If a single measurement is given (e.g., "NME 18 mm", "έκταση 1,2 εκ.") → output that value+unit.
+
+6) Ranges:
+   If a range is given (e.g., "1–1,3 cm", "7–8 χιλ.") → output the UPPER bound with the SAME unit.
+   Examples:
+     - "1–1,3 cm" → "1.3 cm"
+     - "7–8 mm" → "8 mm"
+
+7) Multiple NME regions:
+   • If a target/index region is identified (location, biopsy site, or explicitly prioritized in «ΣΥΜΠΕΡΑΣΜΑ»), use its extent.
+   • Otherwise, select the most suspicious NME described in «ΣΥΜΠΕΡΑΣΜΑ».
+   • If still multiple, select the largest extent (based on the extracted A value) BUT keep its original unit.
+
+8) Text without numeric size:
+   If only distribution terms are given (e.g., «τμηματική/γραμμική/περιοχική») without numbers → return null.
+
+Output format (STRICT):
+Return exactly one JSON string like "18 mm" or "1.3 cm", or null.
+No extra keys. No extra text.
+"""
         )
-    _field_spec = (Optional[float], None)
-    _field_stub = '"nmeDiameter": <number (mm) or null>'
+    _field_spec = (Optional[str], None)
+    _field_stub = '"nmeDiameter": <string (mm or cm) or null>'
 
 class nmeMargins:
     _prompt = (
@@ -242,34 +320,109 @@ class NonEnhancingFindings:
     • «Δεν παρατηρούνται/αναδεικνύονται κύστεις/κυστικές αλλοιώσεις», English: “no cysts”.
     • Or the report lists only enhancing findings (mass/NME) and nowhere mentions cysts.
 
-
-
     • Prefer ΣΥΜΠΕΡΑΣΜΑ if τμήματα διαφωνούν. Προτεραιότητα στην τρέχουσα εξέταση.
     Output exactly one of: "Yes" or "No"."""
         )
-    _field_spec = (Optional[Literal["Yes", "No"]], None)
+    _field_spec = (Literal["Yes", "No"])
+    # _field_spec = (Optional[Literal["Yes", "No"]], None)
     _field_stub = '"NonEnhancingFindings": <Yes|No>'
 
 
-class CurveMorphology:
-    _prompt = ("""- Αιμοδυναμική καμπύλη (CurveMorphology): Allowed values: 1 / 2 / 3.
-        Decision order (apply strictly):
-        1) Return 1 if the text explicitly states Type I (π.χ. «αιμοδυναμική καμπύλη τύπου I/Ι») or synonyms:
-            persistent/continuous increase, no washout, steadily increasing curve.
-        2) Return 2 if Type II (π.χ. «τύπου II/ΙΙ») or synonyms:
-            plateau/stabilization after initial rise.
-        3) Return 3 if Type III (π.χ. «τύπου III/ΙΙΙ») or synonyms:
-            washout/decay after early enhancement.
-        Ambiguity and conflicts:
-        • Prefer ΣΥΜΠΕΡΑΣΜΑ/Conclusion; otherwise use the curve tied to the target/index lesion.
-        • If multiple lesions have different curves and no target is named, choose the most suspicious (3 > 2 > 1).
-        • If dynamic sequence not performed or curve not characterized, return null.
-        Output exactly one of: 1, 2, 3, or null.
-        """
-        )
-    _field_spec = (Optional[Literal[1, 2, 3]], None)
-    _field_stub = '"CurveMorphology": <1|2|3 or null>'
+# class NonEnhancingFindings:
+#     _prompt = (
+#     """
+# You are an information extraction system for breast MRI reports (Greek).
+# Return ONLY one token: "Yes" or "No". No extra text.
 
+# Field: NonEnhancingFindings (κύστεις / κυστικές αλλοιώσεις)
+
+# STRICT RULE:
+# Return "Yes" ONLY if the CURRENT exam text explicitly mentions cysts/cystic lesions.
+# If cyst terms are not explicitly present -> return "No". Do not guess.
+
+# EVIDENCE PRIORITY:
+# 1) Use «ΣΥΜΠΕΡΑΣΜΑ» first.
+# 2) If missing/empty, use «ΕΥΡΗΜΑΤΑ / ΠΕΡΙΓΡΑΦΗ».
+# Ignore «ΙΣΤΟΡΙΚΟ / ΕΝΔΕΙΞΗ» unless it describes a CURRENT imaging finding.
+
+# YES triggers (explicit cyst terminology):
+# - «κύστη», «κύστεις»
+# - «κυστική αλλοίωση», «κυστικές αλλοιώσεις»
+# - «κυστικός σχηματισμός»
+# - «απλή κύστη», «απλές κύστεις», «τυπικές κύστεις»
+# Still "Yes" if described as: «μικρές/λίγες/διάσπαρτες/αμφοτερόπλευρες».
+
+# NO triggers:
+# - Explicit negation of cysts AND no cyst term anywhere else:
+#   «δεν αναδεικνύονται/παρατηρούνται κύστεις», «χωρίς κύστεις», «ουδεμία κύστη/κυστική αλλοίωση».
+
+# IMPORTANT Greek report pattern:
+# If ANY cyst term appears anywhere, do NOT change to "No" because of later phrases like
+# «κατά τα λοιπά», «λοιπός έλεγχος» (these mean "otherwise unremarkable").
+
+# DO NOT count as cysts:
+# - «εκτασία/διάταση πόρων» alone
+# - «σερώμα/αιμάτωμα/συλλογή» unless explicitly called «κύστη/κυστική αλλοίωση»
+# - Only MASS/NME/BPE/ACR statements without cyst terms
+# """
+#         )
+#     _field_spec = (Optional[Literal["Yes", "No"]], None)
+#     _field_stub = '"NonEnhancingFindings": <Yes|No>'
+
+
+# class CurveMorphology:
+#     _prompt = ("""- Αιμοδυναμική καμπύλη (CurveMorphology): Allowed values: 1 / 2 / 3.
+#         Decision order (apply strictly):
+#         1) Return 1 if the text explicitly states Type I (π.χ. «αιμοδυναμική καμπύλη τύπου I/Ι») or synonyms:
+#             persistent/continuous increase, no washout, steadily increasing curve.
+#         2) Return 2 if Type II (π.χ. «τύπου II/ΙΙ») or synonyms:
+#             plateau/stabilization after initial rise.
+#         3) Return 3 if Type III (π.χ. «τύπου III/ΙΙΙ») or synonyms:
+#             washout/decay after early enhancement.
+#         Ambiguity and conflicts:
+#         • Prefer ΣΥΜΠΕΡΑΣΜΑ/Conclusion; otherwise use the curve tied to the target/index lesion.
+#         • If multiple lesions have different curves and no target is named, choose the most suspicious (3 > 2 > 1).
+#         • If dynamic sequence not performed or curve not characterized, return null.
+#         Output exactly one of: 1, 2, 3, or null.
+#         """
+#         )
+#     _field_spec = (Optional[Literal[1, 2, 3]], None)
+#     _field_stub = '"CurveMorphology": <1|2|3 or null>'
+
+class CurveMorphology:
+    _prompt = ("""- Αιμοδυναμική καμπύλη (CurveMorphology): Allowed values: "1" | "2" | "3" | "1,2" | "1,3" | "2,3".
+
+    Decision order (apply strictly):
+    A) Detect explicit curve type mentions (ONLY when explicitly stated):
+    - Type 1 if text states: «αιμοδυναμική καμπύλη τύπου I/Ι», «τύπου 1», “Type I”, “type 1”
+        or synonyms tied to a lesion: persistent / continuous increase / steadily increasing / no washout.
+    - Type 2 if text states: «τύπου II/ΙΙ», «τύπου 2», “Type II”, “type 2”
+        or synonyms: plateau / stabilization after initial rise.
+    - Type 3 if text states: «τύπου III/ΙΙΙ», «τύπου 3», “Type III”, “type 3”
+        or synonyms: washout / decay after early enhancement.
+
+    B) Multi-lesion rule (composite outputs):
+    - If the CURRENT report explicitly states more than one different curve type for different lesions/areas,
+        output the UNIQUE set of types found, sorted ascending, joined with a comma:
+        {1 and 2} -> 1,2
+        {1 and 3} -> 1,3
+        {2 and 3} -> 2,3
+
+    C) Target/index preference:
+    - Prefer ΣΥΜΠΕΡΑΣΜΑ/Conclusion over other sections.
+    - If ΣΥΜΠΕΡΑΣΜΑ specifies a curve for the key finding, use that set from ΣΥΜΠΕΡΑΣΜΑ.
+    - Otherwise, use curves tied to described lesions/areas in the current exam.
+
+    D) Exclusions / non-evidence:
+    - If the report says only “άτυπη/ύποπτη αιμοδυναμική συμπεριφορά” WITHOUT specifying type I/II/III
+        or without kinetic synonyms above -> return null.
+    - If dynamic contrast sequence not performed / not described -> null.
+
+    Output exactly ONE of: "1", "2", "3", "1,2", "1,3", "2,3", or null.
+    """)
+
+    _field_spec = (Optional[Literal["1", "2", "3", "1,2", "1,3", "2,3"]], None)
+    _field_stub = '"CurveMorphology": <"1"|"2"|"3"|"1,2"|"1,3"|"2,3" or null>'
 
 # ADC → numeric value in ×10⁻³ mm²/s (float) or null
 class ADC:
@@ -277,16 +430,12 @@ class ADC:
         """- Δείκτης διάχυσης νερού, ADC (ADC): Output = number in ×10⁻³ mm²/s, or null.
         Parsing/normalization (apply strictly):
         • Accept: "ADC 1,6 x10⁻³ mm²/s", "ADC 1.6×10^-3", "ADC=0.0016 mm²/s", "ADC 900×10⁻⁶ mm²/s".
-        • Normalize Greek comma to dot.
-        • If value is given with ×10⁻³ mm²/s → return the coefficient (e.g., 1.6).
-        • If value is given in mm²/s with NO exponent → multiply by 1000 (e.g., 0.0016 → 1.6).
-        • If value is given in ×10⁻⁶ mm²/s → divide by 1000 (e.g., 900×10⁻⁶ → 0.9).
 
         Multiple values:
         • If a target/index lesion is identified, use its ADC; otherwise return the lowest (worst) ADC reported.
 
         Qualitative-only text:
-        • If only qualitative wording exists (e.g., "χωρίς περιορισμό διάχυσης", "ελεύθερη/περιορισμένη διάχυση") with NO number → return null.
+        • If only qualitative wording exists (e.g., "χωρίς περιορισμό διάχυσης", "ελεύθερη/περιορισμένη διάχυση") with NO number → return qualitative wording.
 
         Context:
         • Prefer ΣΥΜΠΕΡΑΣΜΑ/Conclusion over other sections. If DWI/ADC not performed → null.
@@ -321,27 +470,48 @@ class ADC:
 #     _field_spec = (Optional[Literal["NR", "I", "R"]], None)
 #     _field_stub = '"ADC": <NR|I|R or null>'
 
-class LATERALITY:
-    _prompt = ("""- Πλάγια εντόπιση ευρημάτων (LATERALITY): Allowed values: UNI | BIL.
-        Decision order (apply strictly):
-        A) BIL ⇒ if the CURRENT report explicitly localizes FINDINGS on BOTH breasts, or uses a bilateral phrase
-            that clearly refers to findings/lesions (not background), e.g.:
-            • «αμφοτερόπλευρες κύστεις», «αμφοτερόπλευρες αλλοιώσεις», «bilateral lesions/findings».
-            • Left and Right side–specific findings in the same exam.
-        B) UNI ⇒ if the CURRENT report localizes ≥1 finding to ONLY ONE breast (left or right) and does not
-            localize any finding to the other side (negations on the other side reinforce UNI).
-        C) EXCLUSIONS (do NOT count as findings for laterality):
-            • BPE/background only («ενίσχυση παρεγχύματος / BPE» Minimal/Mild/Moderate/Marked).
-            • Density ACR (A/B/C/D) or symmetry statements without a focal lesion/area.
-            • Technical notes, artifacts, clip/scar without active lesion, calcifications alone (unless described as a lesion category).
-        D) Conflicts:
-            • Prefer ΣΥΜΠΕΡΑΣΜΑ/Conclusion over other sections; otherwise prefer ΕΥΡΗΜΑΤΑ/Findings.
-            • If multiple lesions exist, decide by union of sides: findings on both ⇒ BIL; only one side ⇒ UNI.
-        E) If no FINDINGS are described anywhere in the CURRENT report, return null.
-        Output exactly one of: UNI, BIL, or null.
-        """
-        )
-    _field_spec = (Optional[Literal["UNI", "BIL"]], None)
-    _field_stub = '"LATERALITY": <UNI|BIL or null>'
 
+class LATERALITY:
+    _prompt = ("""- Πλάγια εντόπιση ευρημάτων (LATERALITY): Allowed values: UNILATERAL | BILATERAL | null.
+
+        Ορισμοί:
+        - BILATERAL = αμφοτερόπλευρα = ευρήματα και από τους δύο μαστούς (αριστερό + δεξιό).
+        - UNILATERAL = μονόπλευρα = ευρήματα από τον έναν μαστό μόνο (είτε αριστερό είτε δεξιό).
+
+        Σκοπός:
+        Να βρεθεί η πλάγια εντόπιση των ΠΡΑΓΜΑΤΙΚΩΝ ευρημάτων/βλαβών της ΤΡΕΧΟΥΣΑΣ εξέτασης (όχι background).
+
+        Τι μετράει ως “εύρημα/βλάβη”:
+        - MASS: «μάζα», «συμπαγής αλλοίωση», «σχηματισμός», «ενισχυόμενη βλάβη», «χωροκατακτητική εξεργασία»,
+        ή «αλλοίωση» όταν είναι εστιακή και έχει μέγεθος/μορφολογία (π.χ. «αλλοίωση διαμέτρου …»).
+        - NME: «μη μαζόμορφη ενίσχυση», «περιοχή μη μαζομορφής σκιαγραφικής ενίσχυσης».
+        - Κύστεις/μη ενισχυόμενα: «κύστη», «κύστεις», «κυστικές αλλοιώσεις», «πιθανή κύστη».
+        - Οποιαδήποτε ρητά εντοπισμένη εστία/περιοχή παθολογίας σε αριστερό ή δεξιό μαστό.
+
+        Decision order (apply strictly):
+        A) Εντόπισε πλευρές με ΕΥΡΗΜΑΤΑ στην τρέχουσα εξέταση:
+        - LEFT evidence: «αριστερός μαστός/αριστερού μαστού», “left breast”, “L”.
+        - RIGHT evidence: «δεξιός μαστός/δεξιού μαστού», “right breast”, “R”.
+        - BILATERAL wording: «αμφοτερόπλευρα», «και στους δύο μαστούς», «αμφότερους τους μαστούς»
+
+        B) Απόφαση:
+        - BILATERAL αν υπάρχει ≥1 εύρημα στον αριστερό ΚΑΙ ≥1 εύρημα στον δεξιό μαστό,
+            ή υπάρχει ρητή φράση “αμφοτερόπλευρα” που αφορά ευρήματα.
+        - UNILATERAL αν υπάρχει εύρημα μόνο στη μία πλευρά και καμία βλάβη/εύρημα δεν εντοπίζεται στην άλλη πλευρά
+            (είτε επειδή δεν αναφέρεται τίποτα, είτε υπάρχει ρητή άρνηση).
+
+        C) “Κατά τα λοιπά / από τον λοιπό έλεγχο”:
+        - Αν υπάρχει άρνηση τύπου «Δεν παρατηρούνται … κατά τα λοιπά / από τον λοιπό έλεγχο …»,
+            θεώρησε ότι “ο υπόλοιπος έλεγχος είναι αρνητικός”, όχι ότι όλα είναι αρνητικά.
+            Κράτησε τη laterality από τα θετικά ευρήματα που περιγράφονται αλλού.
+
+        D) Προτεραιότητα ενότητας:
+        - ΣΥΜΠΕΡΑΣΜΑ/Conclusion > ΕΥΡΗΜΑΤΑ/Findings > λοιπά.
+
+        E) Αν δεν υπάρχει ΚΑΝΕΝΑ εύρημα/βλάβη στην τρέχουσα εξέταση (μόνο background/τεχνικά) → null.
+
+        Output exactly one of: UNILATERAL, BILATERAL, or null.
+        """)
+    _field_spec = (Optional[Literal["UNILATERAL", "BILATERAL"]], None)
+    _field_stub = '"LATERALITY": <UNILATERAL|BILATERAL or null>'
 
