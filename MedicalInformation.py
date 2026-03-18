@@ -197,66 +197,66 @@ class NME:
 
 class nmeDiameter:
     _prompt = ("""
-- Διάμετρος/Έκταση NME (nmeDiameter): Output = STRING with value+unit, or null.
-  Allowed unit formats (output must match exactly one):
-  • "<number> mm"
-  • "<number> cm"
-  where <number> may be integer or decimal (dot or comma allowed in input, but output must use dot).
+        - Διάμετρος/Έκταση NME (nmeDiameter): Output = STRING with value+unit, or null.
+        Allowed unit formats (output must match exactly one):
+        • "<number> mm"
+        • "<number> cm"
+        where <number> may be integer or decimal (dot or comma allowed in input, but output must use dot).
 
-Goal (STRICT):
-Extract the primary extent/diameter of NME exactly as stated in the report, preserving the ORIGINAL unit (mm or cm).
-Do NOT convert units. If unclear or not stated, return null.
+        Goal (STRICT):
+        Extract the primary extent/diameter of NME exactly as stated in the report, preserving the ORIGINAL unit (mm or cm).
+        Do NOT convert units. If unclear or not stated, return null.
 
-Decision order (apply strictly):
-1) Scope:
-   Applies ONLY if NME is present, e.g.:
-   • «μη μαζική ενίσχυση»
-   • «μη μαζόμορφη ενίσχυση»
-   • «περιοχή μη μαζομορφής σκιαγραφικής ενίσχυσης»
-   If the report mentions ONLY mass/μάζα or ONLY cysts/κύστεις without NME → return null.
+        Decision order (apply strictly):
+        1) Scope:
+        Applies ONLY if NME is present, e.g.:
+        • «μη μαζική ενίσχυση»
+        • «μη μαζόμορφη ενίσχυση»
+        • «περιοχή μη μαζομορφής σκιαγραφικής ενίσχυσης»
+        If the report mentions ONLY mass/μάζα or ONLY cysts/κύστεις without NME → return null.
 
-2) Evidence priority:
-   Prefer «ΣΥΜΠΕΡΑΣΜΑ». If missing/empty, use «ΕΥΡΗΜΑΤΑ / ΠΕΡΙΓΡΑΦΗ».
-   Prefer CURRENT exam measurements over prior comparisons.
+        2) Evidence priority:
+        Prefer «ΣΥΜΠΕΡΑΣΜΑ». If missing/empty, use «ΕΥΡΗΜΑΤΑ / ΠΕΡΙΓΡΑΦΗ».
+        Prefer CURRENT exam measurements over prior comparisons.
 
-3) Unit handling (NO conversion):
-   Accept only mm/χιλ./χιλιοστά and cm/εκ./εκατοστά.
-   Keep the unit as written in the report:
-   • If the report states cm/εκ. → output in cm.
-   • If the report states mm/χιλ. → output in mm.
-   Normalize only the numeric formatting in OUTPUT:
-   • Convert Greek decimal comma to dot (7,5 → 7.5).
-   Do not change the numeric value due to unit conversion.
+        3) Unit handling (NO conversion):
+        Accept only mm/χιλ./χιλιοστά and cm/εκ./εκατοστά.
+        Keep the unit as written in the report:
+        • If the report states cm/εκ. → output in cm.
+        • If the report states mm/χιλ. → output in mm.
+        Normalize only the numeric formatting in OUTPUT:
+        • Convert Greek decimal comma to dot (7,5 → 7.5).
+        Do not change the numeric value due to unit conversion.
 
-4) Multiple dimensions:
-   If NME extent is given as A×B×C (or A x B x C, with any separators like "×", "x", "Χ", "*"):
-   • Set diameter/extent = A only (the FIRST number).
-   • Preserve the unit as stated for that set of dimensions.
-   Examples:
-     - "15 × 8 × 20 mm" → "15 mm"
-     - "1,5 x 0,8 cm" → "1.5 cm"
+        4) Multiple dimensions:
+        If NME extent is given as A×B×C (or A x B x C, with any separators like "×", "x", "Χ", "*"):
+        • Set diameter/extent = A only (the FIRST number).
+        • Preserve the unit as stated for that set of dimensions.
+        Examples:
+            - "15 × 8 × 20 mm" → "15 mm"
+            - "1,5 x 0,8 cm" → "1.5 cm"
 
-5) Single dimension:
-   If a single measurement is given (e.g., "NME 18 mm", "έκταση 1,2 εκ.") → output that value+unit.
+        5) Single dimension:
+        If a single measurement is given (e.g., "NME 18 mm", "έκταση 1,2 εκ.") → output that value+unit.
 
-6) Ranges:
-   If a range is given (e.g., "1–1,3 cm", "7–8 χιλ.") → output the UPPER bound with the SAME unit.
-   Examples:
-     - "1–1,3 cm" → "1.3 cm"
-     - "7–8 mm" → "8 mm"
+        6) Ranges:
+        If a range is given (e.g., "1–1,3 cm", "7–8 χιλ.") → output the UPPER bound with the SAME unit.
+        Examples:
+            - "1–1,3 cm" → "1.3 cm"
+            - "7–8 mm" → "8 mm"
 
-7) Multiple NME regions:
-   • If a target/index region is identified (location, biopsy site, or explicitly prioritized in «ΣΥΜΠΕΡΑΣΜΑ»), use its extent.
-   • Otherwise, select the most suspicious NME described in «ΣΥΜΠΕΡΑΣΜΑ».
-   • If still multiple, select the largest extent (based on the extracted A value) BUT keep its original unit.
+        7) Multiple NME regions:
+        • If a target/index region is identified (location, biopsy site, or explicitly prioritized in «ΣΥΜΠΕΡΑΣΜΑ»), use its extent.
+        • Otherwise, select the most suspicious NME described in «ΣΥΜΠΕΡΑΣΜΑ».
+        • If still multiple, select the largest extent (based on the extracted A value) BUT keep its original unit.
 
-8) Text without numeric size:
-   If only distribution terms are given (e.g., «τμηματική/γραμμική/περιοχική») without numbers → return null.
+        8) Text without numeric size:
+        If only distribution terms are given (e.g., «τμηματική/γραμμική/περιοχική») without numbers → return null.
 
-Output format (STRICT):
-Return exactly one JSON string like "18 mm" or "1.3 cm", or null.
-No extra keys. No extra text.
-"""
+        Output format (STRICT):
+        Return exactly one JSON string like "18 mm" or "1.3 cm", or null.
+        No extra keys. No extra text.
+        """
         )
     _field_spec = (Optional[str], None)
     _field_stub = '"nmeDiameter": <string (mm or cm) or null>'
@@ -309,19 +309,19 @@ class NonEnhancingFindings:
     _prompt = (
         """- Μη ενισχυόμενα ευρήματα = κύστεις (NonEnhancingFindings): Allowed values: Yes / No.
 
-    Decision order (apply strictly):
-    A) POSITIVE ⇒ Yes if the CURRENT report states the presence of cysts / cystic lesions, e.g.:
-    • «κύστη», «κύστεις», «κυστική αλλοίωση/ες», «κυστικός/ή/ό», English: “cyst(s)”, “simple cyst”, “cystic lesion”.
-    • Treat simple/τυπικές κύστεις as non-enhancing even if “μη ενισχυόμενη” is not written.
-    • If there is a negation FOLLOWED BY a remainder/except clause for the rest of the exam (π.χ. «… από τον λοιπό έλεγχο»),
-        treat as Yes (there is a described cyst, the rest is negative).
+        Decision order (apply strictly):
+        A) POSITIVE ⇒ Yes if the CURRENT report states the presence of cysts / cystic lesions, e.g.:
+        • «κύστη», «κύστεις», «κυστική αλλοίωση/ες», «κυστικός/ή/ό», English: “cyst(s)”, “simple cyst”, “cystic lesion”.
+        • Treat simple/τυπικές κύστεις as non-enhancing even if “μη ενισχυόμενη” is not written.
+        • If there is a negation FOLLOWED BY a remainder/except clause for the rest of the exam (π.χ. «… από τον λοιπό έλεγχο»),
+            treat as Yes (there is a described cyst, the rest is negative).
 
-    B) NEGATIVE ⇒ No only if there is an explicit plain negation without remainder clause, e.g.:
-    • «Δεν παρατηρούνται/αναδεικνύονται κύστεις/κυστικές αλλοιώσεις», English: “no cysts”.
-    • Or the report lists only enhancing findings (mass/NME) and nowhere mentions cysts.
+        B) NEGATIVE ⇒ No only if there is an explicit plain negation without remainder clause, e.g.:
+        • «Δεν παρατηρούνται/αναδεικνύονται κύστεις/κυστικές αλλοιώσεις», English: “no cysts”.
+        • Or the report lists only enhancing findings (mass/NME) and nowhere mentions cysts.
 
-    • Prefer ΣΥΜΠΕΡΑΣΜΑ if τμήματα διαφωνούν. Προτεραιότητα στην τρέχουσα εξέταση.
-    Output exactly one of: "Yes" or "No"."""
+        • Prefer ΣΥΜΠΕΡΑΣΜΑ if τμήματα διαφωνούν. Προτεραιότητα στην τρέχουσα εξέταση.
+        Output exactly one of: "Yes" or "No"."""
         )
     _field_spec = (Literal["Yes", "No"])
     # _field_spec = (Optional[Literal["Yes", "No"]], None)
@@ -392,33 +392,33 @@ class NonEnhancingFindings:
 class CurveMorphology:
     _prompt = ("""- Αιμοδυναμική καμπύλη (CurveMorphology): Allowed values: "1" | "2" | "3" | "1,2" | "1,3" | "2,3".
 
-    Decision order (apply strictly):
-    A) Detect explicit curve type mentions (ONLY when explicitly stated):
-    - Type 1 if text states: «αιμοδυναμική καμπύλη τύπου I/Ι», «τύπου 1», “Type I”, “type 1”
-        or synonyms tied to a lesion: persistent / continuous increase / steadily increasing / no washout.
-    - Type 2 if text states: «τύπου II/ΙΙ», «τύπου 2», “Type II”, “type 2”
-        or synonyms: plateau / stabilization after initial rise.
-    - Type 3 if text states: «τύπου III/ΙΙΙ», «τύπου 3», “Type III”, “type 3”
-        or synonyms: washout / decay after early enhancement.
+        Decision order (apply strictly):
+        A) Detect explicit curve type mentions (ONLY when explicitly stated):
+        - Type 1 if text states: «αιμοδυναμική καμπύλη τύπου I/Ι», «τύπου 1», “Type I”, “type 1”
+            or synonyms tied to a lesion: persistent / continuous increase / steadily increasing / no washout.
+        - Type 2 if text states: «τύπου II/ΙΙ», «τύπου 2», “Type II”, “type 2”
+            or synonyms: plateau / stabilization after initial rise.
+        - Type 3 if text states: «τύπου III/ΙΙΙ», «τύπου 3», “Type III”, “type 3”
+            or synonyms: washout / decay after early enhancement.
 
-    B) Multi-lesion rule (composite outputs):
-    - If the CURRENT report explicitly states more than one different curve type for different lesions/areas,
-        output the UNIQUE set of types found, sorted ascending, joined with a comma:
-        {1 and 2} -> 1,2
-        {1 and 3} -> 1,3
-        {2 and 3} -> 2,3
+        B) Multi-lesion rule (composite outputs):
+        - If the CURRENT report explicitly states more than one different curve type for different lesions/areas,
+            output the UNIQUE set of types found, sorted ascending, joined with a comma:
+            {1 and 2} -> 1,2
+            {1 and 3} -> 1,3
+            {2 and 3} -> 2,3
 
-    C) Target/index preference:
-    - Prefer ΣΥΜΠΕΡΑΣΜΑ/Conclusion over other sections.
-    - If ΣΥΜΠΕΡΑΣΜΑ specifies a curve for the key finding, use that set from ΣΥΜΠΕΡΑΣΜΑ.
-    - Otherwise, use curves tied to described lesions/areas in the current exam.
+        C) Target/index preference:
+        - Prefer ΣΥΜΠΕΡΑΣΜΑ/Conclusion over other sections.
+        - If ΣΥΜΠΕΡΑΣΜΑ specifies a curve for the key finding, use that set from ΣΥΜΠΕΡΑΣΜΑ.
+        - Otherwise, use curves tied to described lesions/areas in the current exam.
 
-    D) Exclusions / non-evidence:
-    - If the report says only “άτυπη/ύποπτη αιμοδυναμική συμπεριφορά” WITHOUT specifying type I/II/III
-        or without kinetic synonyms above -> return null.
-    - If dynamic contrast sequence not performed / not described -> null.
+        D) Exclusions / non-evidence:
+        - If the report says only “άτυπη/ύποπτη αιμοδυναμική συμπεριφορά” WITHOUT specifying type I/II/III
+            or without kinetic synonyms above -> return null.
+        - If dynamic contrast sequence not performed / not described -> null.
 
-    Output exactly ONE of: "1", "2", "3", "1,2", "1,3", "2,3", or null.
+        Output exactly ONE of: "1", "2", "3", "1,2", "1,3", "2,3", or null.
     """)
 
     _field_spec = (Optional[Literal["1", "2", "3", "1,2", "1,3", "2,3"]], None)

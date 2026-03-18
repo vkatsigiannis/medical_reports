@@ -49,7 +49,7 @@ if __name__ == "__main__":
     print(f"Processing {len(report_paths)} reports...")
 
     extract_information = True
-    # extract_information = False
+    extract_information = False
 
     if extract_information:
 
@@ -97,7 +97,7 @@ if __name__ == "__main__":
                 if attr not in ["report_text", "mass_gate", "nme_gate"]:
                     print(f"{attr}: {getattr(patient, attr)}")
             
-            patient.save_to_csv(ORDERED_FIELDS, csv_path="reports_extracted_541_728.csv")
+            patient.save_to_csv(ORDERED_FIELDS, csv_path="reports_extracted_test.csv")
             # patient.save_to_csv(ORDERED_FIELDS, csv_path="reports_extracted_temp.csv")
             # save_to_json_path = f"json/{pat_id}.json"
             # patient.save_to_json(ORDERED_FIELDS, json_path=save_to_json_path)
@@ -105,12 +105,12 @@ if __name__ == "__main__":
             
 
     # lib.model_performace(path_pred="GT_gpt5_2_1.csv", path_gt='GT - edit.xlsx', per_class_breakdown=True)
-    # lib.model_performace(path_pred="reports_extracted_test_500reports_14B.csv", path_gt='GT_gpt5_2_1.xlsx', per_class_breakdown=True)
+    # lib.model_performace(path_pred="reports_extracted_0_728.csv", path_gt='GT_gpt5_2_1.xlsx', per_class_breakdown=True)
 
 
-    # df = lib.evaluate_categorical_metrics(
-    # path_pred="reports_extracted_test_500reports_14B.csv",
-    # path_gt="GT_gpt5_2_1.xlsx",
-    # metrics=("AccAll", "AccPresent", "AccNull", "GoldCoverage"),
-    # )
-    # print(df)
+    df = lib.evaluate_categorical_metrics(
+    path_pred="Predictions_32B_0_728.csv",
+    path_gt="GT_gpt5_2_1.xlsx",
+    metrics=("AccAll", "AccPresent", "AccNull", "GoldCoverage"),
+    )
+    print(df)
