@@ -99,3 +99,11 @@ pat0097,,,,,,,,,,,,,,,,,,,Yes
 pat0098,,,,,,,,,,,,,,,,,,,No
 pat0099,,,,,,,,,,,,,,,,,,,Yes
 pat0100,,,,,,,,,,,,,,,,,,,No
+pat0002,2,No,D,Minimal,No,,,,No,,,,Yes,,BIL
+pat0002,2,No,D,Minimal,No,,,,No,,,,Yes,,BIL
+pat0003,2,No,C-D,Mild,No,,,,No,,,,Yes,1,BIL
+pat0004,2,Yes,D,Moderate,No,,,,No,,,,Yes,,UNI
+pat0001,3,No,D,Marked,Yes,,,7.5,Yes,HO,,7.5,Yes,,BIL
+pat0002,2,No,D,Minimal,No,,,,No,,,,Yes,,BIL
+pat0003,2,No,C-D,Mild,No,,,,No,,,,Yes,1,BIL
+pat0004,2,Yes,D,Moderate,No,,,,No,,,,Yes,,UNI

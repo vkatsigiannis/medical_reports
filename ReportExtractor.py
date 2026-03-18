@@ -208,6 +208,41 @@ class Patient:
                 writer = csv.DictWriter(f, fieldnames=fieldnames)
                 writer.writerow(row)
 
+    def save_to_json(self, ORDERED_FIELDS, json_path: str):
+        """
+        Save the current object as one JSON record inside a JSON array file.
+
+        Args:
+            json_path (str): Path to the JSON file.
+        """
+
+        fieldnames = list(getattr(self, "__dict__").keys())
+
+        to_remove = ["report_text", "mass_gate", "nme_gate"]
+        fieldnames = [k for k in fieldnames if k not in to_remove]
+
+        # Keep the requested order
+        fieldnames = ORDERED_FIELDS
+
+        row = {k: getattr(self, k, None) for k in fieldnames}
+
+        # If file exists, load current list; otherwise start a new one
+        if os.path.exists(json_path):
+            with open(json_path, "r", encoding="utf-8") as f:
+                try:
+                    data = json.load(f)
+                    if not isinstance(data, list):
+                        data = []
+                except json.JSONDecodeError:
+                    data = []
+        else:
+            data = []
+
+        data.append(row)
+
+        with open(json_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+
 from openai import OpenAI
 
 class OpenAIReportExtractor(Patient):

@@ -1,0 +1,20 @@
+[
+    {
+        "ID": "pat0001",
+        "BIRADS": 3,
+        "FamilyHistory": "No",
+        "ACR": "D",
+        "BPE": "Marked",
+        "MASS": "Yes",
+        "massInternalEnhancement": null,
+        "massMargins": null,
+        "massDiameter": 7.5,
+        "NME": "Yes",
+        "nmeInternalEnhancement": "HO",
+        "nmeMargins": null,
+        "nmeDiameter": 7.5,
+        "NonEnhancingFindings": "Yes",
+        "CurveMorphology": null,
+        "LATERALITY": "BIL"
+    }
+]

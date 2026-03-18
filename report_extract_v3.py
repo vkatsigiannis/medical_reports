@@ -26,7 +26,7 @@ if __name__ == "__main__":
     # MODEL_ID = "mistralai/Mistral-7B-Instruct-v0.3"
     # MODEL_ID = "Qwen/Qwen2.5-7B-Instruct"
     # MODEL_ID = "meta-llama/Meta-Llama-3-8B-Instruct" # requires access
-    # MODEL_ID = "Qwen/Qwen2.5-14B-Instruct"
+    MODEL_ID = "Qwen/Qwen2.5-14B-Instruct"
     MODEL_ID = "Qwen/Qwen2.5-32B-Instruct"
     # MODEL_ID = "Qwen/Qwen2.5-72B-Instruct"
     # MODEL_ID = "microsoft/Phi-3.5-mini-instruct" # AttributeError: 'DynamicCache' object has no attribute 'seen_tokens'
@@ -40,13 +40,16 @@ if __name__ == "__main__":
     # report_paths = ["pat0002.txt"]
     # report_paths = ["pat0006.txt"]
     report_paths = os.listdir("txt/")
-    # report_paths = os.listdir("txt/")[:100]
+
+    report_paths = os.listdir("txt/")[0:4]
+    report_paths = os.listdir("txt/")[540:]
+    # report_paths = os.listdir(r"txt/541_728/")[0:4]
     report_paths.sort()
     # report_path = report_paths[:50]
     print(f"Processing {len(report_paths)} reports...")
 
     extract_information = True
-    extract_information = False
+    # extract_information = False
 
     if extract_information:
 
@@ -54,6 +57,7 @@ if __name__ == "__main__":
         # # re = ReportExtractorOpenAI(MODEL_ID="gpt-4.1")
         # # re = ReportExtractorOpenAI(MODEL_ID="gpt-5.2")
         # re = ReportExtractorOpenAI(MODEL_ID="gpt-5-pro")
+        # for report_path in report_paths:
         for report_path in report_paths:
             
             pat_id, report_text = lib.get_report_data(report_path)
@@ -93,9 +97,20 @@ if __name__ == "__main__":
                 if attr not in ["report_text", "mass_gate", "nme_gate"]:
                     print(f"{attr}: {getattr(patient, attr)}")
             
-            patient.save_to_csv(ORDERED_FIELDS, csv_path="reports_extracted_test_0_500.csv")
-            print('\n')
+            patient.save_to_csv(ORDERED_FIELDS, csv_path="reports_extracted_541_728.csv")
+            # patient.save_to_csv(ORDERED_FIELDS, csv_path="reports_extracted_temp.csv")
+            # save_to_json_path = f"json/{pat_id}.json"
+            # patient.save_to_json(ORDERED_FIELDS, json_path=save_to_json_path)
+            # print('\n')
             
 
     # lib.model_performace(path_pred="GT_gpt5_2_1.csv", path_gt='GT - edit.xlsx', per_class_breakdown=True)
-    lib.model_performace(path_pred="Predictions_32B_0_500.csv", path_gt='GT_gpt5_2_1.xlsx', per_class_breakdown=True)
+    # lib.model_performace(path_pred="reports_extracted_test_500reports_14B.csv", path_gt='GT_gpt5_2_1.xlsx', per_class_breakdown=True)
+
+
+    # df = lib.evaluate_categorical_metrics(
+    # path_pred="reports_extracted_test_500reports_14B.csv",
+    # path_gt="GT_gpt5_2_1.xlsx",
+    # metrics=("AccAll", "AccPresent", "AccNull", "GoldCoverage"),
+    # )
+    # print(df)

@@ -1,0 +1,38 @@
+[
+    {
+        "ID": "pat0004",
+        "BIRADS": 2,
+        "FamilyHistory": "Yes",
+        "ACR": "D",
+        "BPE": "Moderate",
+        "MASS": "No",
+        "massInternalEnhancement": null,
+        "massMargins": null,
+        "massDiameter": null,
+        "NME": "No",
+        "nmeInternalEnhancement": null,
+        "nmeMargins": null,
+        "nmeDiameter": null,
+        "NonEnhancingFindings": "Yes",
+        "CurveMorphology": null,
+        "LATERALITY": "UNI"
+    },
+    {
+        "ID": "pat0004",
+        "BIRADS": 2,
+        "FamilyHistory": "Yes",
+        "ACR": "D",
+        "BPE": "Moderate",
+        "MASS": "No",
+        "massInternalEnhancement": null,
+        "massMargins": null,
+        "massDiameter": null,
+        "NME": "No",
+        "nmeInternalEnhancement": null,
+        "nmeMargins": null,
+        "nmeDiameter": null,
+        "NonEnhancingFindings": "Yes",
+        "CurveMorphology": null,
+        "LATERALITY": "UNI"
+    }
+]
