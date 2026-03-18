@@ -3,8 +3,42 @@ from pydantic import Field
 
 class Birads:
     _prompt = ("- BIRADS category as an integer 0..6. Accept I/II/III/IV/V/VI and map to 1..6.")
+    _fewshots = ("""
+        FEW-SHOT EXAMPLES
+
+        Example 1 (Arabic numeral in ΣΥΜΠΕΡΑΣΜΑ)
+        Text:
+        «ΣΥΜΠΕΡΑΣΜΑ: BI-RADS 2. Καλοήθη ευρήματα.»
+        Output:
+        2
+
+        Example 2 (Roman numeral)
+        Text:
+        «ΣΥΜΠΕΡΑΣΜΑ: BI-RADS II.»
+        Output:
+        2
+
+        Example 3 (Subcategory 4a -> 4)
+        Text:
+        «ΣΥΜΠΕΡΑΣΜΑ: BI-RADS IVa. Συνιστάται βιοψία.»
+        Output:
+        4
+
+        Example 4 (Higher category)
+        Text:
+        «ΣΥΜΠΕΡΑΣΜΑ: BI-RADS 5. Υψηλή υποψία κακοήθειας.»
+        Output:
+        5
+
+        Example 5 (Known malignancy)
+        Text:
+        «ΣΥΜΠΕΡΑΣΜΑ: BI-RADS 6 (γνωστή κακοήθεια).»
+        Output:
+        6
+    """)
     _field_spec = (Optional[int], Field(None, ge=0, le=6))
     _field_stub = '"BIRADS": <0..6 or null>'
+
 
 class FamilyHistory:
     _prompt = ("- Ιστορικό Ca (Family / Οικογενειακό): Allowed: Yes / No.\n"
@@ -13,6 +47,44 @@ class FamilyHistory:
         "(e.g., «θετικό (οικογενειακό) ιστορικό καρκίνου …», ««θετικό (οικογενειακό) ιστορικό Ca …», s/p treatment for cancer).\n"
         "  • No only if there is an explicit negation of PERSONAL cancer history "
         "(e.g., «χωρίς/αρνητικό (οικογενειακό) ιστορικό καρκίνου», «δεν αναφέρεται  (οικογενειακό) ιστορικό καρκίνου»).")
+    _fewshots = ("""
+        FEW-SHOT EXAMPLES
+
+        Example 1 (in ΕΝΔΕΙΞΗ)
+        Text:
+        «ΕΝΔΕΙΞΗ: ...
+                 Αρνητικό οικογενειακό ιστορικό.»
+        Output:
+        "No"
+
+        Example 2 (in ΕΝΔΕΙΞΗ)
+        Text:
+        «ΕΝΔΕΙΞΗ: ...
+                 Αναφερόμενο αρνητικό οικογενειακό ιστορικό.»
+        Output:
+        "No"
+
+        Example 3 (in ΕΝΔΕΙΞΗ)
+        Text:
+        «ΕΝΔΕΙΞΗ: ...
+                 Θετικό οικογενειακό ιστορικό (Ca ωοθηκών, θεία από την πλευρά της μητέρας).»
+        Output:
+        "Yes"
+
+        Example 4 (in ΕΝΔΕΙΞΗ)
+        Text:
+        «ΕΝΔΕΙΞΗ: ...
+                 Θετικό οικογενειακό ιστορικό (μητέρα-Ca μαστού αμφοτεροπλεύρως).»
+        Output:
+        "Yes"
+
+        Example 5 (in ΕΝΔΕΙΞΗ)
+        Text:
+        «ΕΝΔΕΙΞΗ: ...
+                 Θετικό οικογενειακό ιστορικό (Ca μαστού δεξιά από την πλευρά της μητέρας, Ca ωοθηκών θεία από την πλευρά της μητέρας)»
+        Output:
+        "No"
+    """)
     _field_spec = (Optional[Literal["Yes", "No"]], None)
     _field_stub = '"FamilyHistory": <Yes|No or null>'
 
@@ -20,12 +92,92 @@ class ACR:
     # Breast Density
     _prompt = ("- Πυκνότητα μαστού ACR. Allowed: A / B / C / D ή συνδυασμοί. "
            "Αν υπάρχουν πολλαπλά, επέστρεψέ τα ενωμένα με '-' διατηρώντας τη σειρά (π.χ. C-D).")
+    _fewshots = ("""
+        FEW-SHOT EXAMPLES
+
+        Example 1 (in ΕΥΡΗΜΑΤΑ)
+        Text:
+        ΕΥΡΗΜΑΤΑ: ...
+                 - Πυκνοί μαστοί με σημαντική αύξηση του ινώδους και του αδενικού στοιχείου αμφοτερόπλευρα (ACR D).
+»
+        Output:
+        "D"
+
+        Example 2 (in ΕΥΡΗΜΑΤΑ)
+        Text:
+        ΕΥΡΗΜΑΤΑ: ...
+                 - Πυκνοί μαστοί με έντονη αύξηση του ινοαδενικού στοιχείου (ACR: D)»
+        Output:
+        "D"
+
+        Example 3 (in ΕΥΡΗΜΑΤΑ)
+        Text:
+        ΕΥΡΗΜΑΤΑ: ...
+                 - Πυκνοί μαστοί με κατά τόπους έντονη αύξηση του ινοαδενικού στοιχείου (ACR C–D).»
+        Output:
+        "C-D"
+
+        Example 4 (in ΕΥΡΗΜΑΤΑ)
+        Text:
+        ΕΥΡΗΜΑΤΑ: ...
+                 • Μαστοί με κατά τόπους έντονη αύξηση των ινοαδενικών στοιχείων (ACR B-C)»
+        Output:
+        "B-C"
+
+        Example 5 (in ΕΥΡΗΜΑΤΑ)
+        Text:
+        ΕΥΡΗΜΑΤΑ: ...
+                 • Λιποβριθείς μαστοί με ήπια αύξηση του ινοαδενικού στοιχείου, με οπισθοθηλαία κυρίως εντόπιση (ACR: A-B).»
+        Output:
+        "A-B"
+    """)
     _field_spec = (Optional[str], None)
     _field_stub = '"ACR": <A|B|C|D or combos like C-D or null>'
 
 class BPE:
     _prompt = ("- Background Parenchymal Enhancement (BPE). Allowed: Minimal, Mild, Moderate, Marked. "
            "Greek: ΜΗΔΑΜΙΝΗ→Minimal, ΗΠΙΑ→Mild, ΜΕΤΡΙΑ→Moderate, ΕΝΤΟΝΗ→Marked.")
+    _fewshots = ("""
+        FEW-SHOT EXAMPLES
+
+        Example 1 (in ΕΥΡΗΜΑΤΑ)
+        Text:
+        ΕΥΡΗΜΑΤΑ: ...
+                 - Έντονη ενίσχυση του φυσικού υποστρώματος (marked BPE), βελτιωμένη συγκριτικά με την προηγούμενη Μαγνητική Τομογραφία, κατά τόπους οζώδη και μικροοζώδη μορφολογία.»
+        Output:
+        "Marked"
+
+        Example 2 (in ΕΥΡΗΜΑΤΑ)
+        Text:
+        ΕΥΡΗΜΑΤΑ: ...
+                 - Μηδαμινή ενίσχυση του μαζικού υποστρώματος (minimal BPE).»
+        Output:
+        "Minimal"
+
+        Example 3 (in ΕΥΡΗΜΑΤΑ)
+        Text:
+        ΕΥΡΗΜΑΤΑ: ...
+                 - Ήπια ενίσχυση του μαζικού υποστρώματος (mild BPE), με κατά τόπους οζώδη μορφολογία.»
+        Output:
+        "Mild"
+
+        Example 4 (in ΕΥΡΗΜΑΤΑ)
+        Text:
+        ΕΥΡΗΜΑΤΑ: ...
+                 - Μέτρια ενίσχυση του μαζικού υποστρώματος (moderate BPE).»
+        Output:
+        "Moderate"
+        Output:
+        "Yes"
+
+        Example 5 (in ΕΥΡΗΜΑΤΑ)
+        Text:
+        ΕΥΡΗΜΑΤΑ: ...
+                 (καμία αναφορά σε BPE)
+                 ...»
+        Output:
+        null
+    """)
     _field_spec = (Optional[Literal["Minimal", "Mild", "Moderate", "Marked"]], None)
     _field_stub = '"BPE": <Minimal|Mild|Moderate|Marked or null>'
 
@@ -60,7 +212,47 @@ class MASS:
 
         Output exactly one of: "Yes" or "No"."""
         )
+    _fewshots = ("""
+        FEW-SHOT EXAMPLES
 
+        Example 1 (in ΣΥΜΠΕΡΑΣΜΑ)
+        Text:
+        ΣΥΜΠΕΡΑΣΜΑ: ...
+                 - Αλλοίωση στον προδρομικό άξονα της 10ης ώρας του αριστερού μαστού, διαμέτρου 7,5 χιλ., με απεικονιστικά χαρακτηριστικά συμβατά με ινοαδένωμα.»
+        Output:
+        "Yes"
+
+        Example 2 (in ΣΥΜΠΕΡΑΣΜΑ)
+        Text:
+        ΣΥΜΠΕΡΑΣΜΑ: ...
+                 - Δεν παρατηρούνται περιοχές παθολογικής σκιαγραφικής ενίσχυσης με λοβιακή ή τμηματική κατανομή.»
+        Output:
+        "No"
+
+        Example 3 (in ΕΥΡΗΜΑΤΑ)
+        Text:
+        ΕΥΡΗΜΑΤΑ: ...
+                 Χωρίς περιοχές παθολογικής ενίσχυσης από τον έλεγχο των μαστών.
+»
+        Output:
+        "No"
+
+        Example 4 (in ΕΥΡΗΜΑΤΑ)
+        Text:
+        ΕΥΡΗΜΑΤΑ: ...
+                 • Στον προβολικό άξονα της 3ης ώρας του αριστερού μαστού και σε επιφανειακή θέση ελέγχεται αλλοίωση με ελαφρώς λοβωτά όρια, διαμέτρου 1,3 εκ.
+                 ...»
+        Output:
+        "Yes"
+
+        Example 5 (in ΣΥΜΠΕΡΑΣΜΑ)
+        Text:
+        ΣΥΜΠΕΡΑΣΜΑ: ...
+                 (καμία αναφορά σε μάζα)
+                 ...»
+        Output:
+        "No"
+    """)
     _field_spec = (Optional[Literal["Yes", "No"]])
     _field_stub = '"MASS": <Yes|No>'
 
@@ -122,6 +314,44 @@ class massDiameter:
         No extra keys. No extra text.
         """
         )
+    _fewshots = ("""
+        FEW-SHOT EXAMPLES
+
+        Example 1 (in ΕΥΡΗΜΑΤΑ)
+        Text:
+        ΕΥΡΗΜΑΤΑ: ...
+                 - Αλλοίωση στον προδρομικό άξονα της 10ης ώρας του αριστερού μαστού, διαμέτρου 7,5 χιλ., με απεικονιστικά χαρακτηριστικά συμβατά με ινοαδένωμα.»
+        Output:
+        "7,5 mm"
+
+        Example 2 (in ΕΥΡΗΜΑΤΑ)
+        Text:
+        ΕΥΡΗΜΑΤΑ: ...
+                 • Στον προβολικό άξονα της 3ης ώρας του αριστερού μαστού και σε επιφανειακή θέση ελέγχεται αλλοίωση με ελαφρώς λοβωτά όρια, διαμέτρου 1,3 εκ.»
+        Output:
+        "1,3 cm"
+
+        Example 3 (in ΕΥΡΗΜΑΤΑ)
+        Text:
+        ΕΥΡΗΜΑΤΑ: ...
+                • Στο κέντρο του δεξιού μαστού και 10 εκ. οπισθοθηλαία παρατηρείται οζώμορφη αλλοίωση, διαμέτρου 7 χιλ.»
+        Output:
+        "7 mm"
+
+        Example 4 (in ΕΥΡΗΜΑΤΑ)
+        Text:
+        ΕΥΡΗΜΑΤΑ: ...
+                 • Παρουσία ολιγάριθμων μασχαλιαίων λεμφαδένων άμφω, καλοηθούς μορφολογίας. Παρατηρείται αριστερός μασχαλιαίος λεμφαδένας βραχείας διαμέτρου 9 χιλ., με εστιακή πάχυνση του φλοιού 4 χιλ.»
+        Output:
+        "9 mm"
+
+        Example 5 (in ΕΥΡΗΜΑΤΑ)
+        Text:
+        ΕΥΡΗΜΑΤΑ: ...
+                  Έτερη εστία αυξημένης ενίσχυσης διαμέτρου 8 χιλ. με παρόμοιους αιμοδυναμικούς χαρακτήρες παρατηρείται στον προσθολοϊκό άξονα της 12ης ώρας.»
+        Output:
+        "8 mm"
+    """)
     _field_spec = (Optional[str], None)
     _field_stub = '"massDiameter": <string (mm or cm) or null>'
 

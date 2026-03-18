@@ -24,10 +24,10 @@ if __name__ == "__main__":
     # ======================= CONFIG =======================
     # MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct" 
     # MODEL_ID = "mistralai/Mistral-7B-Instruct-v0.3"
-    # MODEL_ID = "Qwen/Qwen2.5-7B-Instruct"
+    MODEL_ID = "Qwen/Qwen2.5-7B-Instruct"
     # MODEL_ID = "meta-llama/Meta-Llama-3-8B-Instruct" # requires access
-    MODEL_ID = "Qwen/Qwen2.5-14B-Instruct"
-    MODEL_ID = "Qwen/Qwen2.5-32B-Instruct"
+    # MODEL_ID = "Qwen/Qwen2.5-14B-Instruct"
+    # MODEL_ID = "Qwen/Qwen2.5-32B-Instruct"
     # MODEL_ID = "Qwen/Qwen2.5-72B-Instruct"
     # MODEL_ID = "microsoft/Phi-3.5-mini-instruct" # AttributeError: 'DynamicCache' object has no attribute 'seen_tokens'
     # MODEL_ID = "nvidia/Mistral-NeMo-12B-Instruct"
@@ -45,8 +45,8 @@ if __name__ == "__main__":
     report_paths = all_reports
 
     # report_paths = os.listdir("txt/")[0:4]
-    report_paths = all_reports[0:]
-    # report_paths = os.listdir("txt/")[0:]
+    # report_paths = all_reports[667:668]
+    report_paths = os.listdir("txt/")[0:]
     # report_paths = os.listdir(r"txt/541_728/")[0:4]
     report_paths.sort()
     # report_path = report_paths[:50]
@@ -70,21 +70,21 @@ if __name__ == "__main__":
         
             groups = [
                     ["BIRADS"], 
-                    # ["FamilyHistory"],
-                    # ["ACR"],
-                    # ["BPE"],
-                    # ["MASS"],
-                    # ["massInternalEnhancement"],
-                    # ["massMargins"],
-                    # ["massDiameter"],
-                    # ["NME"],
-                    # ["nmeInternalEnhancement"],
-                    # ["nmeMargins"],
-                    # ["nmeDiameter"],
-                    # ["NonEnhancingFindings"],
-                    # ["CurveMorphology"],
-                    # # ["ADC"],
-                    # ["LATERALITY"],
+                    ["FamilyHistory"],
+                    ["ACR"],
+                    ["BPE"],
+                    ["MASS"],
+                    ["massInternalEnhancement"],
+                    ["massMargins"],
+                    ["massDiameter"],
+                    ["NME"],
+                    ["nmeInternalEnhancement"],
+                    ["nmeMargins"],
+                    ["nmeDiameter"],
+                    ["NonEnhancingFindings"],
+                    ["CurveMorphology"],
+                    # ["ADC"],
+                    ["LATERALITY"],
                 ]
 
             for group in groups:
@@ -101,7 +101,7 @@ if __name__ == "__main__":
                 if attr not in ["report_text", "mass_gate", "nme_gate"]:
                     print(f"{attr}: {getattr(patient, attr)}")
             
-            patient.save_to_csv(ORDERED_FIELDS, csv_path="reports_extracted_fewshots_test.csv")
+            patient.save_to_csv(ORDERED_FIELDS, csv_path="reports_extracted_test_728reports_7B.csv")
             # patient.save_to_csv(ORDERED_FIELDS, csv_path="reports_extracted_temp.csv")
             # save_to_json_path = f"json/{pat_id}.json"
             # patient.save_to_json(ORDERED_FIELDS, json_path=save_to_json_path)
@@ -113,7 +113,7 @@ if __name__ == "__main__":
 
 
     df = lib.evaluate_categorical_metrics(
-    path_pred="Predictions_32B_0_728.csv",
+    path_pred="reports_extracted_test_728reports_7B.csv",
     path_gt="GT_gpt5_2_1.xlsx",
     metrics=("AccAll", "AccPresent", "AccNull", "GoldCoverage"),
     )
