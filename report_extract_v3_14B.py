@@ -47,7 +47,7 @@ if __name__ == "__main__":
     # report_paths = os.listdir("txt/")[0:4]
     # report_paths = all_reports[667:668]
     report_paths = os.listdir("txt/")[0:]
-    # report_paths = os.listdir("txt/")[709:]
+    report_paths = os.listdir("txt/")[666:668]
     # report_paths = os.listdir(r"txt/541_728/")[0:4]
     report_paths.sort()
     # report_path = report_paths[:50]

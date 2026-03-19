@@ -215,16 +215,16 @@ class MASS:
     _fewshots = ("""
         FEW-SHOT EXAMPLES
 
-        Example 1 (in ΣΥΜΠΕΡΑΣΜΑ)
+        Example 1 (in ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ)
         Text:
-        ΣΥΜΠΕΡΑΣΜΑ: ...
+        ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ: ...
                  - Αλλοίωση στον προδρομικό άξονα της 10ης ώρας του αριστερού μαστού, διαμέτρου 7,5 χιλ., με απεικονιστικά χαρακτηριστικά συμβατά με ινοαδένωμα.»
         Output:
         "Yes"
 
-        Example 2 (in ΣΥΜΠΕΡΑΣΜΑ)
+        Example 2 (in ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ)
         Text:
-        ΣΥΜΠΕΡΑΣΜΑ: ...
+        ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ: ...
                  - Δεν παρατηρούνται περιοχές παθολογικής σκιαγραφικής ενίσχυσης με λοβιακή ή τμηματική κατανομή.»
         Output:
         "No"
@@ -245,9 +245,9 @@ class MASS:
         Output:
         "Yes"
 
-        Example 5 (in ΣΥΜΠΕΡΑΣΜΑ)
+        Example 5 (in ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ)
         Text:
-        ΣΥΜΠΕΡΑΣΜΑ: ...
+        ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ: ...
                  (καμία αναφορά σε μάζα)
                  ...»
         Output:
@@ -317,37 +317,37 @@ class massDiameter:
     _fewshots = ("""
         FEW-SHOT EXAMPLES
 
-        Example 1 (in ΕΥΡΗΜΑΤΑ)
+        Example 1 (in ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ)
         Text:
-        ΕΥΡΗΜΑΤΑ: ...
+        ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ: ...
                  - Αλλοίωση στον προδρομικό άξονα της 10ης ώρας του αριστερού μαστού, διαμέτρου 7,5 χιλ., με απεικονιστικά χαρακτηριστικά συμβατά με ινοαδένωμα.»
         Output:
         "7,5 mm"
 
-        Example 2 (in ΕΥΡΗΜΑΤΑ)
+        Example 2 (in ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ)
         Text:
-        ΕΥΡΗΜΑΤΑ: ...
+        ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ: ...
                  • Στον προβολικό άξονα της 3ης ώρας του αριστερού μαστού και σε επιφανειακή θέση ελέγχεται αλλοίωση με ελαφρώς λοβωτά όρια, διαμέτρου 1,3 εκ.»
         Output:
         "1,3 cm"
 
-        Example 3 (in ΕΥΡΗΜΑΤΑ)
+        Example 3 (in ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ)
         Text:
-        ΕΥΡΗΜΑΤΑ: ...
+        ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ: ...
                 Στο κάτω έξω τεταρτημόριο του δεξιού μαστού (7η ώρα) και 6,6 εκ. οπισθοθηλαία παρατηρείται η γνωστή μιτωτική εξεργασία, διαστάσεων 3,1 εκ. x 2,8 εκ. x 2,5 εκ.
         Output:
         "3,1 cm"
 
-        Example 4 (in ΕΥΡΗΜΑΤΑ)
+        Example 4 (in ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ)
         Text:
-        ΕΥΡΗΜΑΤΑ: ...
+        ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ: ...
                  • Παρουσία ολιγάριθμων μασχαλιαίων λεμφαδένων άμφω, καλοηθούς μορφολογίας. Παρατηρείται αριστερός μασχαλιαίος λεμφαδένας βραχείας διαμέτρου 9 χιλ., με εστιακή πάχυνση του φλοιού 4 χιλ.»
         Output:
         "9 mm"
 
-        Example 5 (in ΕΥΡΗΜΑΤΑ)
+        Example 5 (in ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ)
         Text:
-        ΕΥΡΗΜΑΤΑ: ...
+        ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ: ...
                   Έτερη εστία αυξημένης ενίσχυσης διαμέτρου 8 χιλ. με παρόμοιους αιμοδυναμικούς χαρακτήρες παρατηρείται στον προσθολοϊκό άξονα της 12ης ώρας.»
         Output:
         "8 mm"
@@ -377,35 +377,35 @@ class massMargins:
 
         Example 1 (in ΕΥΡΗΜΑΤΑ)
         Text:
-        ΕΥΡΗΜΑΤΑ: ...
+        ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ: ...
                  • Στο κέντρο του δεξιού μαστού και 3 εκ. οπισθοθηλαία παρατηρείται ωοειδής αλλοίωση με σαφή όρια διαμέτρου 7,8 χιλ.»
         Output:
         "σαφή"
 
-        Example 2 (in ΕΥΡΗΜΑΤΑ)
+        Example 2 (in ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ)
         Text:
-        ΕΥΡΗΜΑΤΑ: ...
+        ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ: ...
                  • Στο κέντρο του δεξιού μαστού και 10 εκ. οπισθοθηλαία παρατηρείται οζώμορφη αλλοίωση, διαμέτρου 7 χιλ.»
         Output:
         "σαφή"
 
-        Example 3 (in ΕΥΡΗΜΑΤΑ)
+        Example 3 (in ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ)
         Text:
-        ΕΥΡΗΜΑΤΑ: ...
+        ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ: ...
                 παρατηρείται αλλοίωση με ασαφή όρια και ακτινωτές προσεκβολές,»
         Output:
         "ασαφή"
 
-        Example 4 (in ΕΥΡΗΜΑΤΑ)
+        Example 4 (in ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ)
         Text:
-        ΕΥΡΗΜΑΤΑ: ...
+        ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ: ...
                  • Παρουσία ολιγάριθμων μασχαλιαίων λεμφαδένων άμφω, καλοηθούς μορφολογίας. Παρατηρείται αριστερός μασχαλιαίος λεμφαδένας βραχείας διαμέτρου 9 χιλ., με εστιακή πάχυνση του φλοιού 4 χιλ.»
         Output:
         "ασαφή"
 
-        Example 5 (in ΕΥΡΗΜΑΤΑ)
+        Example 5 (in ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ)
         Text:
-        ΕΥΡΗΜΑΤΑ: ...
+        ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ: ...
                 • Στον προβολικό άξονα της 3ης ώρας του αριστερού μαστού και σε επιφανειακή θέση ελέγχεται αλλοίωση με ελαφρώς λοβωτά όρια, διαμέτρου 1,3 εκ.»
         Output:
         null
@@ -432,37 +432,37 @@ class massInternalEnhancement:
     _fewshots = ("""
         FEW-SHOT EXAMPLES
 
-        Example 1 (in ΕΥΡΗΜΑΤΑ)
+        Example 1 (in ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ)
         Text:
-        ΕΥΡΗΜΑΤΑ: ...
+        ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ: ...
                  παρατηρείται η γνωστή μιτωτική εξεργασία, διαστάσεων 3,1 εκ. x 2,8 εκ. x 2,5 εκ., που παρουσιάζει περιοχές νέκρωσης και περιφερική ανομοιόμορφη ενίσχυση»
         Output:
         "ανομοιογενής"
 
-        Example 2 (in ΕΥΡΗΜΑΤΑ)
+        Example 2 (in ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ)
         Text:
-        ΕΥΡΗΜΑΤΑ: ...
+        ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ: ...
                  παρατηρείται ωοειδής αλλοίωση με σαφή όρια διαμέτρου 7,8 χιλ. που παρουσιάζει ομοιογενή σκιαγραφική ενίσχυση»
         Output:
         "ομοιογενής"
 
-        Example 3 (in ΕΥΡΗΜΑΤΑ)
+        Example 3 (in ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ)
         Text:
-        ΕΥΡΗΜΑΤΑ: ...
+        ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ: ...
                 παρατηρείται μαζομορφής αλλοίωση, με ασαφή όρια και ακτινωτές προσεκβολές»
         Output:
         "ανομοιογενής"
 
-        Example 4 (in ΕΥΡΗΜΑΤΑ)
+        Example 4 (in ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ)
         Text:
-        ΕΥΡΗΜΑΤΑ: ...
+        ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ: ...
                  ελέγχεται αλλοίωση με ελαφρώς λοβωτά όρια, διαμέτρου 1,3 εκ., με ήπια σκιαγραφική ενίσχυση και αιμοδυναμική καμπύλη τύπου I, χωρίς περιορισμό στις εικόνες μοριακής διάχυσης»
         Output:
         null
 
-        Example 5 (in ΕΥΡΗΜΑΤΑ)
+        Example 5 (in ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ)
         Text:
-        ΕΥΡΗΜΑΤΑ: ...
+        ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ: ...
                 παρατηρείται οζώμορφη αλλοίωση, διαμέτρου 7 χιλ., με παρουσία εσωτερικού μη ενισχυόμενου διαφραγματίου»
         Output:
         null
@@ -499,37 +499,37 @@ class NME:
     _fewshots = ("""
         FEW-SHOT EXAMPLES
 
-        Example 1 (in ΣΥΜΠΕΡΑΣΜΑ)
+        Example 1 (in ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ)
         Text:
-        ΣΥΜΠΕΡΑΣΜΑ: ...
+        ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ: ...
                  παρατηρείται περιοχή μη μάζας μορφής παραμαγνητικής ενίσχυσης»
         Output:
         "Yes"
 
-        Example 2 (in ΣΥΜΠΕΡΑΣΜΑ)
+        Example 2 (in ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ)
         Text:
-        ΣΥΜΠΕΡΑΣΜΑ: ...
+        ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ: ...
                  ελέγχεται κυστική αλλοίωση με ασαφώς λοβωτά όρια, χωρίς σκιαγραφική ενίσχυση»
         Output:
         "Yes"
 
-        Example 3 (in ΕΥΡΗΜΑΤΑ)
+        Example 3 (in ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ)
         Text:
-        ΕΥΡΗΜΑΤΑ: ...
+        ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ: ...
                  παρατηρείται ταινιοειδής περιοχή αυξημένης ενίσχυσης διαμέτρου 11 χιλ.»
         Output:
         "Yes"
 
         Example 4 (in ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ)
         Text:
-        ΕΥΡΗΜΑΤΑ: ...
+        ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ: ...
                  - Δεν παρατηρούνται περιοχές παθολογικής σκιαγραφικής ενίσχυσης με λοβιακή ή τμηματική κατανομή.»
         Output:
         "No"
 
-        Example 5 (in ΣΥΜΠΕΡΑΣΜΑ)
+        Example 5 (in ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ)
         Text:
-        ΣΥΜΠΕΡΑΣΜΑ: ...
+        ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ: ...
                  χωρίς παθολογική σκιαγραφική ενίσχυση στην περιοχή,
                  ...»
         Output:
@@ -719,6 +719,44 @@ class nmeInternalEnhancement:
         Output exactly ένα από: «ομοιογενής», «ανομοιογενής», ή null.
         """
     )
+    _fewshots = ("""
+        FEW-SHOT EXAMPLES
+
+        Example 1 (in ΕΥΡΗΜΑΤΑ)
+        Text:
+        ΕΥΡΗΜΑΤΑ: ...
+                 παρατηρείται εκτεταμένη τμηματική περιοχή μη μαζόμορφης παθολογικής ενίσχυσης διαστάσεων  εκ. που παρουσιάζει ασαφή όρια και ακτινωτές προσεκβολές»
+        Output:
+        null
+
+        Example 2 (in ΕΥΡΗΜΑΤΑ)
+        Text:
+        ΕΥΡΗΜΑΤΑ: ...
+                 παρατηρείται εστιακή περιοχή σκιαγραφικής ενίσχυσης, σχετικά ασαφών ορίων...»
+        Output:
+        null
+
+        Example 3 (in ΕΥΡΗΜΑΤΑ)
+        Text:
+        ΕΥΡΗΜΑΤΑ: ...
+                παρατηρείται υποστρόγγυλη περιοχή μη μαζόμορφης ενίσχυσης...»
+        Output:
+        null
+
+        Example 4 (in ΕΥΡΗΜΑΤΑ)
+        Text:
+        ΕΥΡΗΜΑΤΑ: ...
+                 Παρατηρούνται στικτές εστίες ενίσχυσης, διαμέτρου ολίγων χιλιοστών, σε αμφότερους τους μαστούς, εύρημα που συνήθως περισσότερο υπέρ εστιών αδένωσης.»
+        Output:
+        null
+
+        Example 5 (in ΕΥΡΗΜΑΤΑ)
+        Text:
+        ΕΥΡΗΜΑΤΑ: ...
+                Στον άξονα της 6ης ώρας του αριστερού μαστού παρατηρείται ταινιοειδούς μορφολογίας μη μαζόμορφη ενίσχυση προσθιοπίσθιας διαμέτρου 7 χιλ.»
+        Output:
+        null
+    """)    
     _field_spec = (Optional[Literal["ομοιογενής", "ανομοιογενής"]], None)
     _field_stub = '"nmeInternalEnhancement": <ομοιογενής|ανομοιογενής or null>'
 
@@ -742,71 +780,49 @@ class NonEnhancingFindings:
         • Prefer ΣΥΜΠΕΡΑΣΜΑ if τμήματα διαφωνούν. Προτεραιότητα στην τρέχουσα εξέταση.
         Output exactly one of: "Yes" or "No"."""
         )
+    _fewshots = ("""
+        FEW-SHOT EXAMPLES
+
+        Example 1 (in ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ)
+        Text:
+        ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ: ...
+                 - Αρκετές κυστικές αλλοιώσεις σε αμφότερους τους μαστούς, διαμέτρου από ολίγα χιλιοστά έως 1,2 εκ., με τα χαρακτηριστικά των επιλεγμένων κύστεων.»
+        Output:
+        "Yes"
+
+        Example 2 (in ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ)
+        Text:
+        ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ: ...
+                 - Κύστεις σε αμφότερους τους μαστούς.»
+        Output:
+        "Yes"
+
+        Example 3 (in ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ)
+        Text:
+        ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ: ...
+                 - Ολιγάριθμες κύστεις αμφοτερόπλευρα, η μεγαλύτερη με διάμετρο 7,3 χιλ. »
+        Output:
+        "Yes"
+
+        Example 4 (in ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ)
+        Text:
+        ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ: ...
+                 • Παρατηρούνται ολιγάριθμες κύστεις, διαμέτρου έως 8 χιλ.»
+        Output:
+        "Yes"
+
+        Example 5 (in ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ)
+        Text:
+        ΕΥΡΗΜΑΤΑ or ΣΥΜΠΕΡΑΣΜΑ: ...
+                 (δεν γίνεται αναφορά σε κύστες/κυστικές αλλοιώσεις),
+                 ...»
+        Output:
+        "No"
+    """)
     _field_spec = (Literal["Yes", "No"])
     # _field_spec = (Optional[Literal["Yes", "No"]], None)
     _field_stub = '"NonEnhancingFindings": <Yes|No>'
 
-
-# class NonEnhancingFindings:
-#     _prompt = (
-#     """
-# You are an information extraction system for breast MRI reports (Greek).
-# Return ONLY one token: "Yes" or "No". No extra text.
-
-# Field: NonEnhancingFindings (κύστεις / κυστικές αλλοιώσεις)
-
-# STRICT RULE:
-# Return "Yes" ONLY if the CURRENT exam text explicitly mentions cysts/cystic lesions.
-# If cyst terms are not explicitly present -> return "No". Do not guess.
-
-# EVIDENCE PRIORITY:
-# 1) Use «ΣΥΜΠΕΡΑΣΜΑ» first.
-# 2) If missing/empty, use «ΕΥΡΗΜΑΤΑ / ΠΕΡΙΓΡΑΦΗ».
-# Ignore «ΙΣΤΟΡΙΚΟ / ΕΝΔΕΙΞΗ» unless it describes a CURRENT imaging finding.
-
-# YES triggers (explicit cyst terminology):
-# - «κύστη», «κύστεις»
-# - «κυστική αλλοίωση», «κυστικές αλλοιώσεις»
-# - «κυστικός σχηματισμός»
-# - «απλή κύστη», «απλές κύστεις», «τυπικές κύστεις»
-# Still "Yes" if described as: «μικρές/λίγες/διάσπαρτες/αμφοτερόπλευρες».
-
-# NO triggers:
-# - Explicit negation of cysts AND no cyst term anywhere else:
-#   «δεν αναδεικνύονται/παρατηρούνται κύστεις», «χωρίς κύστεις», «ουδεμία κύστη/κυστική αλλοίωση».
-
-# IMPORTANT Greek report pattern:
-# If ANY cyst term appears anywhere, do NOT change to "No" because of later phrases like
-# «κατά τα λοιπά», «λοιπός έλεγχος» (these mean "otherwise unremarkable").
-
-# DO NOT count as cysts:
-# - «εκτασία/διάταση πόρων» alone
-# - «σερώμα/αιμάτωμα/συλλογή» unless explicitly called «κύστη/κυστική αλλοίωση»
-# - Only MASS/NME/BPE/ACR statements without cyst terms
-# """
-#         )
-#     _field_spec = (Optional[Literal["Yes", "No"]], None)
-#     _field_stub = '"NonEnhancingFindings": <Yes|No>'
-
-
-# class CurveMorphology:
-#     _prompt = ("""- Αιμοδυναμική καμπύλη (CurveMorphology): Allowed values: 1 / 2 / 3.
-#         Decision order (apply strictly):
-#         1) Return 1 if the text explicitly states Type I (π.χ. «αιμοδυναμική καμπύλη τύπου I/Ι») or synonyms:
-#             persistent/continuous increase, no washout, steadily increasing curve.
-#         2) Return 2 if Type II (π.χ. «τύπου II/ΙΙ») or synonyms:
-#             plateau/stabilization after initial rise.
-#         3) Return 3 if Type III (π.χ. «τύπου III/ΙΙΙ») or synonyms:
-#             washout/decay after early enhancement.
-#         Ambiguity and conflicts:
-#         • Prefer ΣΥΜΠΕΡΑΣΜΑ/Conclusion; otherwise use the curve tied to the target/index lesion.
-#         • If multiple lesions have different curves and no target is named, choose the most suspicious (3 > 2 > 1).
-#         • If dynamic sequence not performed or curve not characterized, return null.
-#         Output exactly one of: 1, 2, 3, or null.
-#         """
-#         )
-#     _field_spec = (Optional[Literal[1, 2, 3]], None)
-#     _field_stub = '"CurveMorphology": <1|2|3 or null>'
 
 class CurveMorphology:
     _prompt = ("""- Αιμοδυναμική καμπύλη (CurveMorphology): Allowed values: "1" | "2" | "3" | "1,2" | "1,3" | "2,3".
@@ -839,7 +855,46 @@ class CurveMorphology:
 
         Output exactly ONE of: "1", "2", "3", "1,2", "1,3", "2,3", or null.
     """)
+    _fewshots = ("""
+        FEW-SHOT EXAMPLES
 
+        Example 1 (in ΕΝΔΕΙΞΗ)
+        Text:
+        «ΕΝΔΕΙΞΗ: ...
+                 αλλοίωση διαμέτρου 7,5 χιλ. με αιμοδυναμική καμπύλη τύπου Ι»
+        Output:
+        "1"
+
+        Example 2 (in ΕΝΔΕΙΞΗ)
+        Text:
+        «ΕΝΔΕΙΞΗ: ...
+                αλλοίωση διαμέτρου 7,5 χιλ. με αιμοδυναμική καμπύλη τύπου Ι
+                 ...
+                 παρατηρείται περιοχή μη μάζας μορφής παραμαγνητικής ενίσχυσης γραμμοειδούς-τμηματικής κατανομής τύπου ΙΙΙ»
+        Output:
+        "1,3"
+
+        Example 3 (in ΕΝΔΕΙΞΗ)
+        Text:
+        «ΕΝΔΕΙΞΗ: ...
+                 περιοχή αυξημένης ενίσχυσης διαμέτρου 5 χιλ., που παρουσιάζει αιμοδυναμική καμπύλη τύπου II»
+        Output:
+        "2"
+
+        Example 4 (in ΕΝΔΕΙΞΗ)
+        Text:
+        «ΕΝΔΕΙΞΗ: ...
+                 Θετικό οικογενειακό ιστορικό (μητέρα-Ca μαστού αμφοτεροπλεύρως).»
+        Output:
+        "Yes"
+
+        Example 5 (in ΕΝΔΕΙΞΗ)
+        Text:
+        «ΕΝΔΕΙΞΗ: ...
+                 Θετικό οικογενειακό ιστορικό (Ca μαστού δεξιά από την πλευρά της μητέρας, Ca ωοθηκών θεία από την πλευρά της μητέρας)»
+        Output:
+        "No"
+    """)
     _field_spec = (Optional[Literal["1", "2", "3", "1,2", "1,3", "2,3"]], None)
     _field_stub = '"CurveMorphology": <"1"|"2"|"3"|"1,2"|"1,3"|"2,3" or null>'
 
@@ -864,30 +919,6 @@ class ADC:
     )
     _field_spec = (Optional[float], None)
     _field_stub = '"ADC": <number (×10⁻³ mm²/s) or null>'
-
-
-
-# class ADC:
-#     _prompt = ("""- Δείκτης διάχυσης νερού, ADC (ADC): Allowed values: NR | I | R.
-#         Thresholds (use numeric ADC when present; normalize 1,2 ↔ 1.2):
-#             • NON RESTRICTED (NR)  => ADC ≥ 1.4 ×10⁻³ mm²/s
-#             • INTERMEDIATE (I)     => 1.0 < ADC < 1.4 ×10⁻³ mm²/s
-#             • RESTRICTION (R)      => ADC ≤ 1.0 ×10⁻³ mm²/s
-#         Qualitative-only cues (when no number is given):
-#             • «χωρίς περιορισμό διάχυσης», «ελεύθερη διάχυση»  ⇒ NR
-#             • «με περιορισμό διάχυσης», «περιορισμένη διάχυση» ⇒ R
-#             • «ενδιάμεση/οριακή διάχυση» ⇒ I (only if explicitly stated)
-#         Multiple lesions:
-#             • If target/index lesion is named, use its ADC.
-#             • If not, choose the worst category in descending risk: R > I > NR.
-#         Context:
-#             • Prefer ΣΥΜΠΕΡΑΣΜΑ/Conclusion over other sections.
-#             • If DWI/ADC not performed or not characterized, return null.
-#         Output exactly one of: NR, I, R, or null.
-#         """
-#         )
-#     _field_spec = (Optional[Literal["NR", "I", "R"]], None)
-#     _field_stub = '"ADC": <NR|I|R or null>'
 
 
 class LATERALITY:
@@ -933,4 +964,28 @@ class LATERALITY:
         """)
     _field_spec = (Optional[Literal["UNILATERAL", "BILATERAL"]], None)
     _field_stub = '"LATERALITY": <UNILATERAL|BILATERAL or null>'
+
+
+
+# class ADC:
+#     _prompt = ("""- Δείκτης διάχυσης νερού, ADC (ADC): Allowed values: NR | I | R.
+#         Thresholds (use numeric ADC when present; normalize 1,2 ↔ 1.2):
+#             • NON RESTRICTED (NR)  => ADC ≥ 1.4 ×10⁻³ mm²/s
+#             • INTERMEDIATE (I)     => 1.0 < ADC < 1.4 ×10⁻³ mm²/s
+#             • RESTRICTION (R)      => ADC ≤ 1.0 ×10⁻³ mm²/s
+#         Qualitative-only cues (when no number is given):
+#             • «χωρίς περιορισμό διάχυσης», «ελεύθερη διάχυση»  ⇒ NR
+#             • «με περιορισμό διάχυσης», «περιορισμένη διάχυση» ⇒ R
+#             • «ενδιάμεση/οριακή διάχυση» ⇒ I (only if explicitly stated)
+#         Multiple lesions:
+#             • If target/index lesion is named, use its ADC.
+#             • If not, choose the worst category in descending risk: R > I > NR.
+#         Context:
+#             • Prefer ΣΥΜΠΕΡΑΣΜΑ/Conclusion over other sections.
+#             • If DWI/ADC not performed or not characterized, return null.
+#         Output exactly one of: NR, I, R, or null.
+#         """
+#         )
+#     _field_spec = (Optional[Literal["NR", "I", "R"]], None)
+#     _field_stub = '"ADC": <NR|I|R or null>'
 
