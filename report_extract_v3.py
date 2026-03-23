@@ -70,25 +70,25 @@ if __name__ == "__main__":
         
             groups = [
                     ["BIRADS"], 
-                    # ["FamilyHistory"],
-                    # ["ACR"],
-                    # ["BPE"],
-                    # ["MASS"],
-                    # ["massInternalEnhancement"],
-                    # ["massMargins"],
-                    # ["massDiameter"],
-                    # ["NME"],
-                    # ["nmeInternalEnhancement"],
-                    # ["nmeMargins"],
-                    # ["nmeDiameter"],
-                    # ["NonEnhancingFindings"],
-                    # ["CurveMorphology"],
-                    # # ["ADC"],
-                    # ["LATERALITY"],
+                    ["FamilyHistory"],
+                    ["ACR"],
+                    ["BPE"],
+                    ["MASS"],
+                    ["massInternalEnhancement"],
+                    ["massMargins"],
+                    ["massDiameter"],
+                    ["NME"],
+                    ["nmeInternalEnhancement"],
+                    ["nmeMargins"],
+                    ["nmeDiameter"],
+                    ["NonEnhancingFindings"],
+                    ["CurveMorphology"],
+                    # ["ADC"],
+                    ["LATERALITY"],
                 ]
 
             for group in groups:
-                re.extract_structured_data(Patient=patient, keys=group, include_fewshots=False)
+                re.extract_structured_data(Patient=patient, keys=group, include_fewshots=True)
                 # results.append(result)
                 # print("Extraction result:", result)
             # merged_results = lib.merge_dicts(results)
@@ -101,7 +101,7 @@ if __name__ == "__main__":
                 if attr not in ["report_text", "mass_gate", "nme_gate"]:
                     print(f"{attr}: {getattr(patient, attr)}")
             
-            patient.save_to_csv(ORDERED_FIELDS, csv_path="reports_extracted_fewshots_test.csv")
+            patient.save_to_csv(ORDERED_FIELDS, csv_path="reports_extracted_test_728reports_32B_fewshots.csv")
             # patient.save_to_csv(ORDERED_FIELDS, csv_path="reports_extracted_temp.csv")
             # save_to_json_path = f"json/{pat_id}.json"
             # patient.save_to_json(ORDERED_FIELDS, json_path=save_to_json_path)
@@ -113,7 +113,7 @@ if __name__ == "__main__":
 
 
     df = lib.evaluate_categorical_metrics(
-    path_pred="Predictions_32B_0_728.csv",
+    path_pred="reports_extracted_test_728reports_32B_fewshots.csv",
     path_gt="GT_gpt5_2_1.xlsx",
     metrics=("AccAll", "AccPresent", "AccNull", "GoldCoverage"),
     )
