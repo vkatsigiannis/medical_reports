@@ -47,13 +47,14 @@ if __name__ == "__main__":
     # report_paths = os.listdir("txt/")[0:4]
     report_paths = all_reports[0:]
     # report_paths = os.listdir("txt/")[0:]
+    report_paths = all_reports[477:]
     # report_paths = os.listdir(r"txt/541_728/")[0:4]
     report_paths.sort()
     # report_path = report_paths[:50]
     print(f"Processing {len(report_paths)} reports...")
 
     extract_information = True
-    # extract_information = False
+    extract_information = False
 
     if extract_information:
 

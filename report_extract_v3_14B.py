@@ -24,7 +24,7 @@ if __name__ == "__main__":
     # ======================= CONFIG =======================
     MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct" 
     # MODEL_ID = "mistralai/Mistral-7B-Instruct-v0.3"
-    # MODEL_ID = "Qwen/Qwen2.5-7B-Instruct"
+    MODEL_ID = "Qwen/Qwen2.5-7B-Instruct"
     # MODEL_ID = "meta-llama/Meta-Llama-3-8B-Instruct" # requires access
     # MODEL_ID = "Qwen/Qwen2.5-14B-Instruct"
     # MODEL_ID = "Qwen/Qwen2.5-32B-Instruct"
@@ -46,7 +46,8 @@ if __name__ == "__main__":
 
     # report_paths = os.listdir("txt/")[0:4]
     # report_paths = all_reports[667:668]
-    report_paths = os.listdir("txt/")[0:]
+    report_paths = all_reports[0:]
+    # report_paths = all_reports[663:]
     # report_paths = os.listdir("txt/")[666:668]
     # report_paths = os.listdir(r"txt/541_728/")[0:4]
     report_paths.sort()
