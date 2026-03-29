@@ -24,10 +24,10 @@ if __name__ == "__main__":
     # ======================= CONFIG =======================
     MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct" 
     # MODEL_ID = "mistralai/Mistral-7B-Instruct-v0.3"
-    MODEL_ID = "Qwen/Qwen2.5-7B-Instruct"
-    MODEL_ID = "ilsp/Meltemi-7B-Instruct-v1.5"
-    MODEL_ID = "m42-health/Llama3-Med42-8B"
-    MODEL_ID = "microsoft/MediPhi-Instruct"
+    # MODEL_ID = "Qwen/Qwen2.5-7B-Instruct"
+    # MODEL_ID = "ilsp/Meltemi-7B-Instruct-v1.5"
+    # MODEL_ID = "m42-health/Llama3-Med42-8B"
+    # MODEL_ID = "microsoft/MediPhi-Instruct"
 
     # MODEL_ID = "meta-llama/Meta-Llama-3-8B-Instruct" # requires access
     # MODEL_ID = "Qwen/Qwen2.5-14B-Instruct"
@@ -50,8 +50,8 @@ if __name__ == "__main__":
 
     # report_paths = os.listdir("txt/")[0:4]
     # report_paths = all_reports[667:668]
-    report_paths = all_reports[0:]
-    # report_paths = all_reports[278:]
+    # report_paths = all_reports[0:]
+    report_paths = all_reports[728:]
     # report_paths = os.listdir("txt/")[666:668]
     # report_paths = os.listdir(r"txt/541_728/")[0:4]
     report_paths.sort()
@@ -108,7 +108,7 @@ if __name__ == "__main__":
                 if attr not in ["report_text", "mass_gate", "nme_gate"]:
                     print(f"{attr}: {getattr(patient, attr)}")
             
-            patient.save_to_csv(ORDERED_FIELDS, csv_path="reports_extracted_test_728reports_MediPhi_fewshots.csv")
+            patient.save_to_csv(ORDERED_FIELDS, csv_path="reports_extracted_test_729_1066reports_1B_fewshots.csv")
             # patient.save_to_csv(ORDERED_FIELDS, csv_path="reports_extracted_temp.csv")
             # save_to_json_path = f"json/{pat_id}.json"
             # patient.save_to_json(ORDERED_FIELDS, json_path=save_to_json_path)
@@ -120,7 +120,7 @@ if __name__ == "__main__":
 
 
     df = lib.evaluate_categorical_metrics(
-    path_pred="reports_extracted_test_728reports_MediPhi_fewshots.csv",
+    path_pred="reports_extracted_test_729_1066reports_1B_fewshots.csv",
     path_gt="GT_gpt5_2_1.xlsx",
     metrics=("AccAll", "AccPresent", "AccNull", "GoldCoverage"),
     )

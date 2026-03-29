@@ -1,0 +1,3 @@
+﻿ID,BIRADS,FamilyHistory,ACR,BPE,MASS,massInternalEnhancement,massMargins,massDiameter,NME,nmeInternalEnhancement,nmeMargins,nmeDiameter,NonEnhancingFindings,CurveMorphology,LATERALITY
+pat0729,2,No,C,Minimal,No,,,,No,,,,No,1,BIL
+pat0730,4,No,B,Marked,Yes,HO,C,110.0,Yes,,C,11.0,No,3,BIL
