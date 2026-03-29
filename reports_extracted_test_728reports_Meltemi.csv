@@ -139,6 +139,7 @@ pat0137,2,No,C-D,Minimal,No,,,,No,,,,No,1,UNI
 pat0138,2,No,Β,Minimal,No,,,,No,,,,No,1,BIL
 pat0139,2,Yes,C,Moderate,No,,,,No,,,,Yes,"1,2",UNI
 pat0140,2,No,C,Minimal,No,,,,No,,,,Yes,1,BIL
+pat0141,5,No,C,Minimal,Yes,HE,NC,5.0,Yes,HE,NC,14.0,Yes,"2,3",BIL
 pat0142,2,Yes,D,Mild,No,,,,Yes,HE,NC,11.0,Yes,"2,3",BIL
 pat0143,2,No,C,Mild,No,,,,No,,,,Yes,1,BIL
 pat0144,2,No,Α,Minimal,No,,,,No,,,,Yes,1,UNI
@@ -172,6 +173,7 @@ pat0171,2,Yes,A-B,Minimal,No,,,,No,,,,Yes,"1,2",BIL
 pat0172,3,No,A-B,Minimal,No,,,,No,,,,Yes,1,BIL
 pat0173,3,Yes,B-C,Mild,Yes,HO,NC,,No,,,,Yes,"1,3",BIL
 pat0174,2,No,Α,Minimal,No,,,,No,,,,No,1,UNI
+pat0175,4,Yes,B,Mild,No,,,,Yes,HE,NC,19.0,Yes,"2,3",BIL
 pat0176,4,No,D,Marked,No,,,,Yes,HE,NC,,Yes,"2,3",BIL
 pat0177,3,No,C-D,Marked,No,,,,No,,,,No,1,UNI
 pat0178,2,Yes,C,Mild,No,,,,No,,,,Yes,"2,3",BIL
