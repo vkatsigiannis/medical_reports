@@ -11,13 +11,15 @@ if __name__ == "__main__":
 
     os.environ["CUDA_VISIBLE_DEVICES"] = "5"
     # os.environ["OPENAI_API_KEY"] = "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"
-    os.environ["OPENAI_API_KEY"] = "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" # 2026/03/18
+    # os.environ["OPENAI_API_KEY"] = "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" # 2026/03/18
+    os.environ["OPENAI_API_KEY"] = "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" # 2026/03/29
     import openai
 
     # Setting the API key
     openai.api_key = os.environ['OPENAI_API_KEY']
     # openai.api_key = "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"
-    openai.api_key = "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" # 2026/03/18
+    # openai.api_key = "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" # 2026/03/18
+    openai.api_key = "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" # 2026/03/29
 
     # Perform tasks using OpenAI API
     # print(openai.Model.list()) # List all OpenAI models
@@ -40,10 +42,15 @@ if __name__ == "__main__":
     # report_paths = ["pat0002.txt", "pat0003.txt"]
     # report_paths = ["pat0002.txt"]
     # report_paths = ["pat0006.txt"]
-    report_paths = os.listdir("txt/")
-    report_paths = os.listdir("txt/")[100:101]
-    report_paths = os.listdir("txt/")[540:]
-    report_paths.sort()
+    all_reports = os.listdir("txt/")
+    all_reports.sort()
+
+    report_paths = all_reports
+
+    # report_paths = os.listdir("txt/")[0:4]
+    # report_paths = all_reports[667:668]
+    # report_paths = all_reports[0:]
+    report_paths = all_reports[728:]
     # report_path = report_paths[:50]
     print(f"Processing {len(report_paths)} reports...")
 
@@ -95,8 +102,8 @@ if __name__ == "__main__":
                 if attr not in ["report_text", "mass_gate", "nme_gate"]:
                     print(f"{attr}: {getattr(patient, attr)}")
             
-            # patient.save_to_csv(ORDERED_FIELDS, csv_path="GT_OpenAI_541_728.csv")
-            patient.save_to_csv(ORDERED_FIELDS, csv_path="temp.csv")
+            patient.save_to_csv(ORDERED_FIELDS, csv_path="GT_OpenAI_729_1066.csv")
+            # patient.save_to_csv(ORDERED_FIELDS, csv_path="temp.csv")
             print('\n')
             
 
