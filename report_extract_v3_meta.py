@@ -22,10 +22,10 @@ if __name__ == "__main__":
     # print(openai.Model.list()) # List all OpenAI models
 
     # ======================= CONFIG =======================
-    MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct" 
+    # MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct" 
     # MODEL_ID = "mistralai/Mistral-7B-Instruct-v0.3"
     # MODEL_ID = "Qwen/Qwen2.5-7B-Instruct"
-    # MODEL_ID = "ilsp/Meltemi-7B-Instruct-v1.5"
+    MODEL_ID = "ilsp/Meltemi-7B-Instruct-v1.5"
     # MODEL_ID = "m42-health/Llama3-Med42-8B"
     # MODEL_ID = "microsoft/MediPhi-Instruct"
 
@@ -110,7 +110,7 @@ if __name__ == "__main__":
                 if attr not in ["report_text", "mass_gate", "nme_gate"]:
                     print(f"{attr}: {getattr(patient, attr)}")
             
-            patient.save_to_csv(ORDERED_FIELDS, csv_path="reports_extracted_test_729_1066reports_1B.csv")
+            patient.save_to_csv(ORDERED_FIELDS, csv_path="reports_extracted_test_729_1066reports_Meltemi.csv")
             # patient.save_to_csv(ORDERED_FIELDS, csv_path="reports_extracted_temp.csv")
             # save_to_json_path = f"json/{pat_id}.json"
             # patient.save_to_json(ORDERED_FIELDS, json_path=save_to_json_path)
@@ -122,7 +122,7 @@ if __name__ == "__main__":
 
 
     df = lib.evaluate_categorical_metrics(
-    path_pred="reports_extracted_test_729_1066reports_1B.csv",
+    path_pred="reports_extracted_test_729_1066reports_Meltemi.csv",
     path_gt="GT_gpt5_2_1.xlsx",
     metrics=("AccAll", "AccPresent", "AccNull", "GoldCoverage"),
     )

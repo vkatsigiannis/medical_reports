@@ -50,7 +50,7 @@ if __name__ == "__main__":
     # report_paths = os.listdir("txt/")[0:4]
     # report_paths = all_reports[667:668]
     # report_paths = all_reports[0:]
-    report_paths = all_reports[510:]
+    report_paths = all_reports[728:]
     # report_paths = os.listdir("txt/")[666:668]
     # report_paths = os.listdir(r"txt/541_728/")[0:4]
     report_paths.sort()
@@ -107,7 +107,7 @@ if __name__ == "__main__":
                 if attr not in ["report_text", "mass_gate", "nme_gate"]:
                     print(f"{attr}: {getattr(patient, attr)}")
             
-            patient.save_to_csv(ORDERED_FIELDS, csv_path="reports_extracted_test_728reports_Med42_fewshots.csv")
+            patient.save_to_csv(ORDERED_FIELDS, csv_path="reports_extracted_test_729_1066reports_Med42_fewshots.csv")
             # patient.save_to_csv(ORDERED_FIELDS, csv_path="reports_extracted_temp.csv")
             # save_to_json_path = f"json/{pat_id}.json"
             # patient.save_to_json(ORDERED_FIELDS, json_path=save_to_json_path)
@@ -119,7 +119,7 @@ if __name__ == "__main__":
 
 
     df = lib.evaluate_categorical_metrics(
-    path_pred="reports_extracted_test_728reports_Med42_fewshots.csv",
+    path_pred="reports_extracted_test_729_1066reports_Med42_fewshots.csv",
     path_gt="GT_gpt5_2_1.xlsx",
     metrics=("AccAll", "AccPresent", "AccNull", "GoldCoverage"),
     )
