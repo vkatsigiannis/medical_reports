@@ -215,10 +215,14 @@ class GLiNERExtractor:
         self,
         model_name: str = DEFAULT_MODEL,
         threshold: float = 0.3,
+        chunk_size: int = 250,   # words per chunk
+        overlap: int = 40,
     ):
         print(f"[GLiNERExtractor] Loading {model_name}…")
         self.model = GLiNER.from_pretrained(model_name)
         self.threshold = threshold
+        self.chunk_size = chunk_size
+        self.overlap = overlap
         print("[GLiNERExtractor] Loaded.")
 
     # ------------------------------------------------------------------
@@ -226,16 +230,68 @@ class GLiNERExtractor:
     # ------------------------------------------------------------------
 
     def _build_cache(self, text: str) -> dict[str, list[dict]]:
-        entities = self.model.predict_entities(
-            text, _LABELS, threshold=self.threshold, flat_ner=True,
-        )
+        """Split long reports into overlapping chunks, merge results."""
+        chunks = self._chunk_text(text)
         by_field: dict[str, list[dict]] = {}
-        for ent in entities:
-            field = _LABEL_TO_FIELD.get(ent["label"])
-            if field is None:
-                continue
-            by_field.setdefault(field, []).append(ent)
+
+        for chunk_text, char_offset in chunks:
+            entities = self.model.predict_entities(
+                chunk_text, _LABELS,
+                threshold=self.threshold,
+                flat_ner=True,
+            )
+            for ent in entities:
+                field = _LABEL_TO_FIELD.get(ent["label"])
+                if field is None:
+                    continue
+                # Adjust span offsets back to full-text positions
+                ent = {**ent, "start": ent["start"] + char_offset,
+                            "end":   ent["end"]   + char_offset}
+                by_field.setdefault(field, []).append(ent)
+
+        # Deduplicate: keep highest-score entity per field per text span
+        for field, ents in by_field.items():
+            seen, deduped = set(), []
+            for ent in sorted(ents, key=lambda e: -e["score"]):
+                key = ent["text"].strip().lower()
+                if key not in seen:
+                    seen.add(key)
+                    deduped.append(ent)
+            by_field[field] = deduped
+
         return by_field
+
+
+    def _chunk_text(
+        self,
+        text: str,
+        chunk_size: int = 300,
+        overlap: int = 50,
+    ) -> list[tuple[str, int]]:
+        words = text.split()
+        if len(words) <= chunk_size:
+            return [(text, 0)]
+
+        # Build word → char offset mapping once
+        char_offsets = []
+        pos = 0
+        for word in words:
+            idx = text.index(word, pos)
+            char_offsets.append(idx)
+            pos = idx + len(word)
+
+        chunks = []
+        start = 0
+        while start < len(words):
+            end = min(start + chunk_size, len(words))
+            chunk_text = " ".join(words[start:end])
+            char_offset = char_offsets[start]
+            chunks.append((chunk_text, char_offset))
+            if end == len(words):
+                break
+            start += chunk_size - overlap
+
+        return chunks
 
     def extract_value(self, field: str, cache: dict[str, list[dict]]):
         """Extract and parse value for one field from the GLiNER cache."""

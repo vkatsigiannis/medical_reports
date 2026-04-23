@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
     # List reports
     report_paths = sorted(os.listdir(INPUT_DIR))
-    report_paths = report_paths[:3]  # limit for testing
+    report_paths = report_paths[:]  # limit for testing
     print(f"Processing {len(report_paths)} reports with '{EXTRACTOR_TYPE}' extractor…")
 
     # Field groups (match your existing pipeline order)
