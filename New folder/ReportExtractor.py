@@ -1,22 +1,22 @@
 from typing import Optional, Literal
 from pydantic import Field, create_model
 
-import os, re, json, unicodedata
+import os, re, json, outlines, torch, unicodedata
 from pathlib import Path
+
 from datetime import datetime
 
-import lib
-
-# Heavy ML deps — imported at module level only when this file is loaded.
-# If you only need Patient, import from Patient.py directly.
-import outlines, torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from transformers.utils.logging import set_verbosity_error
+
+import lib
+import csv
 
 os.environ["TORCHDYNAMO_DISABLE"] = "1"
 os.environ["TORCHINDUCTOR_DISABLE"] = "1"
 os.environ["PYTORCH_TRITON_DISABLE"] = "1"
 os.environ["TRANSFORMERS_VERBOSITY"] = "error"
+
 os.environ["PYTHONWARNINGS"] = "ignore::UserWarning"
 
 BASE = Path(__file__).resolve().parent
@@ -24,22 +24,224 @@ CACHE_DIR = BASE / ".hf_cache"
 CACHE_DIR.mkdir(exist_ok=True)
 os.environ["HF_HOME"] = str(CACHE_DIR)
 
-# Load HF token from environment — do not hardcode secrets in source.
-# Set via:  export HUGGINGFACEHUB_API_TOKEN="hf_..."
-if os.environ.get("HUGGINGFACEHUB_API_TOKEN"):
-    pass  # already set
-else:
-    print("[ReportExtractor] WARNING: HUGGINGFACEHUB_API_TOKEN not set in environment.")
+os.environ["HUGGINGFACEHUB_API_TOKEN"] = "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"
 
 set_verbosity_error()
 assert torch.cuda.is_available(), "CUDA GPU not found."
 
-# Import Patient from its own module (no heavy deps)
-from Patient import Patient  # noqa: E402
+class Patient:
+    def __init__(self, report_text: str):
+        
+        self.report_text = report_text
+        self.mass_gate, self.nme_gate = True, True
 
-# Keep a dummy reference so old `from ReportExtractor import Patient` still works
-_Patient = Patient
+        # for key in ["LATERALITY", "MASS", "NME", "LITERACY"]:
+        #     setattr(self, key, None)
 
+    # def clear_attributes(self):
+    #     for attr in list(self.__dict__.keys()):
+    #         delattr(self, attr)
+        
+    #     return self
+    
+    def post_process(self):
+        
+
+        _DIAM_RE = re.compile(r"^\s*(\d+(?:[.,]\d+)?)\s*(mm|cm)\s*$", flags=re.IGNORECASE)
+        if hasattr(self, 'FamilyHistory'):
+            if getattr(self, 'FamilyHistory', None) is None:
+                setattr(self, 'FamilyHistory', 'No')
+        
+        if hasattr(self, 'ADC'):
+            adc_value = getattr(self, 'ADC', None)
+            print(f"Post-processing ADC value: {adc_value}, the type is {type(adc_value)}")
+            if adc_value is None: setattr(self, 'ADC', None)
+            else:
+                if adc_value >= 1.4: setattr(self, 'ADC', "NR")
+                elif 1.0 < adc_value < 1.4: setattr(self, 'ADC', "I")
+                elif adc_value <= 1.0: setattr(self, 'ADC', "R")
+                else: setattr(self, 'ADC', None)
+            
+            
+
+        # --- Post-process massDiameter: "<number> mm|cm" -> float mm (value only) ---
+        if hasattr(self, 'massDiameter'):
+            massDiameter_value = getattr(self, 'massDiameter', None)
+
+            if massDiameter_value is None:
+                setattr(self, 'massDiameter', None)
+            else:
+                # Expect strings like "12 mm" or "1.2 cm"
+                if isinstance(massDiameter_value, str):
+                    m = _DIAM_RE.match(massDiameter_value)
+                    if not m:
+                        setattr(self, 'massDiameter', None)
+                    else:
+                        num_str, unit = m.group(1), m.group(2).lower()
+                        num_str = num_str.replace(",", ".")
+                        try:
+                            num = float(num_str)
+                        except ValueError:
+                            setattr(self, 'massDiameter', None)
+                        else:
+                            if unit == "cm":
+                                num *= 10.0
+                            # store numeric value only (mm)
+                            setattr(self, 'massDiameter', num)
+                else:
+                    # If model returns unexpected type
+                    setattr(self, 'massDiameter', massDiameter_value)
+
+
+            
+        if hasattr(self, 'massMargins'):
+            massMargins_value = getattr(self, 'massMargins', None)
+            # print(f"Post-processing ADC value: {adc_value}, the type is {type(adc_value)}")
+            if massMargins_value is None: setattr(self, 'massMargins', None)
+            if massMargins_value == 'σαφή': setattr(self, 'massMargins', 'C')
+            if massMargins_value == 'ασαφή': setattr(self, 'massMargins', 'NC')
+        
+        if hasattr(self, 'massInternalEnhancement'):
+            massInternalEnhancement_value = getattr(self, 'massInternalEnhancement', None)
+            # print(f"Post-processing ADC value: {adc_value}, the type is {type(adc_value)}")
+            if massInternalEnhancement_value is None: setattr(self, 'massInternalEnhancement', None)
+            if massInternalEnhancement_value == 'ομοιογενής': setattr(self, 'massInternalEnhancement', 'HO')
+            if massInternalEnhancement_value == 'ανομοιογενής': setattr(self, 'massInternalEnhancement', 'HE')
+        
+        if hasattr(self, 'LATERALITY'):
+            LATERALITY_value = getattr(self, 'LATERALITY', None)
+            # print(f"Post-processing ADC value: {adc_value}, the type is {type(adc_value)}")
+            if LATERALITY_value is None: setattr(self, 'LATERALITY', None)
+            if LATERALITY_value == 'UNILATERAL': setattr(self, 'LATERALITY', 'UNI')
+            if LATERALITY_value == 'BILATERAL': setattr(self, 'LATERALITY', 'BIL')
+
+        
+        if hasattr(self, 'nmeMargins'):
+            nmeMargins_value = getattr(self, 'nmeMargins', None)
+            # print(f"Post-processing ADC value: {adc_value}, the type is {type(adc_value)}")
+            if nmeMargins_value is None: setattr(self, 'nmeMargins', None)
+            if nmeMargins_value == 'σαφή': setattr(self, 'nmeMargins', 'C')
+            if nmeMargins_value == 'ασαφή': setattr(self, 'nmeMargins', 'NC')
+        
+        # --- Post-process nmeDiameter: "<number> mm|cm" -> float mm (value only) ---
+        if hasattr(self, 'nmeDiameter'):
+            nmeDiameter_value = getattr(self, 'nmeDiameter', None)
+
+            if nmeDiameter_value is None:
+                setattr(self, 'nmeDiameter', None)
+            else:
+                # Expect strings like "18 mm" or "1.3 cm"
+                if isinstance(nmeDiameter_value, str):
+                    m = _DIAM_RE.match(nmeDiameter_value)
+                    if not m:
+                        setattr(self, 'nmeDiameter', None)
+                    else:
+                        num_str, unit = m.group(1), m.group(2).lower()
+                        num_str = num_str.replace(",", ".")
+                        try:
+                            num = float(num_str)
+                        except ValueError:
+                            setattr(self, 'nmeDiameter', None)
+                        else:
+                            if unit == "cm":
+                                num *= 10.0
+                            # store numeric value only (mm)
+                            setattr(self, 'nmeDiameter', num)
+                else:
+                    # If model returns unexpected type
+                    setattr(self, 'nmeDiameter', nmeDiameter_value)
+        
+        if hasattr(self, 'nmeInternalEnhancement'):
+            nmeInternalEnhancement_value = getattr(self, 'nmeInternalEnhancement', None)
+            # print(f"Post-processing ADC value: {adc_value}, the type is {type(adc_value)}")
+            if nmeInternalEnhancement_value is None: setattr(self, 'nmeInternalEnhancement', None)
+            if nmeInternalEnhancement_value == 'ομοιογενής': setattr(self, 'nmeInternalEnhancement', 'HO')
+            if nmeInternalEnhancement_value == 'ανομοιογενής': setattr(self, 'nmeInternalEnhancement', 'HE')
+
+        return self
+      
+    def adc_category(adc_value: float) -> str:
+        """
+        Categorize ADC value according to thresholds:
+        • NON RESTRICTED (NR)  => ADC ≥ 1.4 ×10⁻³ mm²/s
+        • INTERMEDIATE (I)     => 1.0 < ADC < 1.4 ×10⁻³ mm²/s
+        • RESTRICTION (R)      => ADC ≤ 1.0 ×10⁻³ mm²/s
+        Args:
+        adc_value (float): ADC value in 10⁻³ mm²/s units.
+        Returns:
+        str: Category ("NR", "I", or "R")
+        """
+        if adc_value >= 1.4:
+            return "NR"
+        elif 1.0 < adc_value < 1.4:
+            return "I"
+        elif adc_value <= 1.0:
+            return "R"
+        else:
+            return None
+
+    def save_to_csv(self, ORDERED_FIELDS, csv_path: str):
+        """
+        Args:
+            csv_path (str): Path to the CSV file.
+        """
+
+        fieldnames = getattr(self, '__dict__').keys()
+
+        to_remove = ['report_text', 'mass_gate', 'nme_gate']
+        fieldnames = [k for k in fieldnames if k not in to_remove]
+        fieldnames = ORDERED_FIELDS
+
+        # print(fieldnames)
+        
+
+        row = {k: getattr(self, k) for k in fieldnames}
+        file_exists = os.path.exists(csv_path)
+        # Use UTF-8 BOM on first write so Excel auto-detects encoding
+        if not file_exists:
+            with open(csv_path, "w", encoding="utf-8-sig", newline="") as f:
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer.writeheader()
+                writer.writerow(row)
+        else:
+            with open(csv_path, "a", encoding="utf-8", newline="") as f:
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer.writerow(row)
+
+    def save_to_json(self, ORDERED_FIELDS, json_path: str):
+        """
+        Save the current object as one JSON record inside a JSON array file.
+
+        Args:
+            json_path (str): Path to the JSON file.
+        """
+
+        fieldnames = list(getattr(self, "__dict__").keys())
+
+        to_remove = ["report_text", "mass_gate", "nme_gate"]
+        fieldnames = [k for k in fieldnames if k not in to_remove]
+
+        # Keep the requested order
+        fieldnames = ORDERED_FIELDS
+
+        row = {k: getattr(self, k, None) for k in fieldnames}
+
+        # If file exists, load current list; otherwise start a new one
+        if os.path.exists(json_path):
+            with open(json_path, "r", encoding="utf-8") as f:
+                try:
+                    data = json.load(f)
+                    if not isinstance(data, list):
+                        data = []
+                except json.JSONDecodeError:
+                    data = []
+        else:
+            data = []
+
+        data.append(row)
+
+        with open(json_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
 
 from openai import OpenAI
 

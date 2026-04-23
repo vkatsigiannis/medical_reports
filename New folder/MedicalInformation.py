@@ -167,6 +167,8 @@ class BPE:
                  - Μέτρια ενίσχυση του μαζικού υποστρώματος (moderate BPE).»
         Output:
         "Moderate"
+        Output:
+        "Yes"
 
         Example 5 (in ΕΥΡΗΜΑΤΑ)
         Text:
@@ -251,7 +253,7 @@ class MASS:
         Output:
         "No"
     """)
-    _field_spec = (Optional[Literal["Yes", "No"]], None)
+    _field_spec = (Optional[Literal["Yes", "No"]])
     _field_stub = '"MASS": <Yes|No>'
 
     
@@ -533,7 +535,7 @@ class NME:
         Output:
         "No"
     """)
-    _field_spec = (Optional[Literal["Yes", "No"]], None)
+    _field_spec = (Optional[Literal["Yes", "No"]])
     _field_stub = '"NME": <Yes|No>'
 
 class nmeDiameter:
@@ -817,7 +819,8 @@ class NonEnhancingFindings:
         Output:
         "No"
     """)
-    _field_spec = (Optional[Literal["Yes", "No"]], None)
+    _field_spec = (Literal["Yes", "No"])
+    # _field_spec = (Optional[Literal["Yes", "No"]], None)
     _field_stub = '"NonEnhancingFindings": <Yes|No>'
 
 
