@@ -22,7 +22,7 @@ from Patient import Patient
 if __name__ == "__main__":
 
     # ============================ CONFIG ============================
-    EXTRACTOR_TYPE = "gliner"          # "gliner" | "qa" | "combined"
+    EXTRACTOR_TYPE = "combined"          # "gliner" | "qa" | "combined"
     INPUT_DIR      = "txt/"
     OUTPUT_CSV     = f"reports_extracted_{EXTRACTOR_TYPE}.csv"
     GT_XLSX        = "GT_gpt5_2_1.xlsx"
